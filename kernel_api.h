@@ -9,7 +9,7 @@
 #define KERNEL_API_H_
 
 namespace nnsim{
-	void init_network(float h, int NumNeur, int NumConns, float SimTime, unsigned int time);
+	void init_network(float h, int NumNeur, int NumConns, float SimTime, unsigned int time=0);
 
 	void init_neurs(float* Vm_arr, float* Um_arr, float* Ie_arr, float* a_arr,
 			float* b_arr, float* c_arr, float* d_arr, float* k_arr, float* Cm_arr,
@@ -27,8 +27,6 @@ namespace nnsim{
 	void init_conns(float* weights_arr, unsigned int* delays_arr, int* pre_conns_arr, int* post_conns_arr);
 
 	void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes, unsigned int* syn_num_spikes);
-
-	int simulate();
 
 	int simulate();
 }

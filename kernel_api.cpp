@@ -18,14 +18,13 @@ float izhik_Um(float Vm, float Um, int m){
 	return time_step*as[m]*(bs[m]*(Vm - Vrs[m]) - Um);
 }
 
-void init_network(float h, int NumNeur, int NumConns, float SimTime, unsigned int time){
+void init_network(float h, int NumNeur, int NumConns, float SimTime, unsigned int time=0){
 	time_step = h;
 	Ncon = NumConns;
 	Nneur = NumNeur;
 	Tsim = SimTime/time_step;
 	t = time;
 	printf("success initializing network!\n");
-
 }
 
 void init_neurs(float* Vm_arr, float* Um_arr, float* Ie_arr, float* a_arr,
@@ -47,6 +46,9 @@ void init_neurs(float* Vm_arr, float* Um_arr, float* Ie_arr, float* a_arr,
 	Isyns = Isyn_arr;
 	Erev_exc = Erev_exc_arr;
 	Erev_inh = Erev_inh_arr;
+	for (int i = 0; i < Nneur; i++){
+		printf("%i: %g\n", i, as[i]);
+	}
 	printf("Success initializing neurons!\n");
 }
 

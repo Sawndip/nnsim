@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
 	fill_conn_params();
 	fill_syn_params();
 
-	nnsim::init_network(h, Nneur, Ncon, SimTime, 0);
+	nnsim::init_network(h, Nneur, Ncon, SimTime);
 	nnsim::init_neurs(Vms, Ums, Ies, as, bs, cs, ds, ks, Cms, Vrs, Vts, Vpeaks, Isyns, Erev_exc, Erev_inh);
 	nnsim::init_conns(weights,delays, pre_conns, post_conns);
 	nnsim::init_exc_synapses(y_exc, x_exc, u_exc, U_exc, tau_psc_exc, tau_rec_exc, tau_fac_exc);
@@ -118,6 +118,5 @@ void fill_syn_params(){
 		tau_psc_inh[n] = 3.0f;
 		tau_rec_inh[n] = 100.0f;
 		tau_fac_inh[n] = 1000.0f;
-
 	}
 }
