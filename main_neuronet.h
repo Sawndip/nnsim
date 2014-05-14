@@ -50,7 +50,7 @@ float* tau_rec_inh;
 float* tau_fac_inh;
 
 float* weights;
-unsigned int* delays;
+int* delays;
 int* pre_conns;
 int* post_conns;
 

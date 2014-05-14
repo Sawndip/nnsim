@@ -72,7 +72,7 @@ void fill_neur_params(){
 
 void fill_conn_params(){
 	weights = new float[Ncon];
-	delays = new unsigned int[Ncon];
+	delays = new int[Ncon];
 	pre_conns = new int[Ncon];
 	post_conns = new int[Ncon];
 	for (int c = 0; c < Ncon; c++){

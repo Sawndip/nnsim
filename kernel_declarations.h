@@ -76,7 +76,7 @@ namespace nnsim{
 	float* ina_inh;
 
 	float* weights;
-	unsigned int* delays;
+	int* delays;
 	int* pre_conns;
 	int* post_conns;
 }

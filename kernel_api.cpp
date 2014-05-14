@@ -27,10 +27,9 @@ void init_network(float h, int NumNeur, int NumConns, float SimTime, unsigned in
 	printf("success initializing network!\n");
 }
 
-void init_neurs(float* Vm_arr, float* Um_arr, float* Ie_arr, float* a_arr,
-		float* b_arr, float* c_arr, float* d_arr, float* k_arr, float* Cm_arr,
-		float* Vr_arr, float* Vt_arr, float* Vpeak_arr, float* Isyn_arr,
-		float* Erev_exc_arr, float* Erev_inh_arr){
+void init_neurs(float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* Ie_arr, float* Isyn_arr,
+		float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr,
+		float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k_arr){
 	Vms = Vm_arr;
 	Ums = Um_arr;
 	Ies = Ie_arr;
@@ -47,7 +46,7 @@ void init_neurs(float* Vm_arr, float* Um_arr, float* Ie_arr, float* a_arr,
 	Erev_exc = Erev_exc_arr;
 	Erev_inh = Erev_inh_arr;
 	for (int i = 0; i < Nneur; i++){
-		printf("%i: %g\n", i, as[i]);
+		printf("%i: %g\n", i, ks[i]);
 	}
 	printf("Success initializing neurons!\n");
 }
@@ -106,11 +105,14 @@ void init_inh_synapses(float* y_inh_arr, float* x_inh_arr,
 	printf("Success initializing inhibitory synapses!\n");
 }
 
-void init_conns(float* weights_arr, unsigned int* delays_arr, int* pre_conns_arr, int* post_conns_arr){
+void init_conns(float* weights_arr, int* delays_arr, int* pre_conns_arr, int* post_conns_arr){
 	weights = weights_arr;
 	delays = delays_arr;
 	pre_conns = pre_conns_arr;
 	post_conns = post_conns_arr;
+	for (int i = 0; i < Ncon; i++){
+		printf("pre: %i post: %i\n", pre_conns[i], post_conns[i]);
+	}
 	printf("Success initializing connections!\n");
 }
 
