@@ -67,7 +67,7 @@ static PyObject* init_network(PyObject *self, PyObject* args){
 static PyObject* init_neurs(PyObject *self, PyObject* args){
 	unsigned int Nparam = 15;
 	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOO",
+	if (!PyArg_ParseTuple(args, "(OOOOOOOOOOOOOOO)",
 			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
 			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6], &args_pyobj_arr[7],
 			&args_pyobj_arr[8], &args_pyobj_arr[9], &args_pyobj_arr[10], &args_pyobj_arr[11],
