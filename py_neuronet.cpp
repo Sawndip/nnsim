@@ -13,9 +13,7 @@
 static const char module_docstring[] = "Python interface for NeuralNetworkSIMulator (NNSIM)";
 static const char init_network_docstring[] = "init_network";
 static const char init_neurs_docstring[] = "init_neurs";
-static const char init_conns_docstring[] = "init_conns";
-static const char init_exc_synapses_docstring[] = "init_exc_synapses";
-static const char init_inh_synapses_docstring[] = "init_inh_synapses";
+static const char init_synapses_docstring[] = "init_synapses";
 static const char init_spikes_docstring[] = "init_spikes";
 static const char init_simulate_docstring[] = "simulate";
 
@@ -23,11 +21,7 @@ static PyObject* init_network(PyObject *self, PyObject* args);
 
 static PyObject* init_neurs(PyObject *self, PyObject* args);
 
-static PyObject* init_conns(PyObject *self, PyObject* args);
-
-static PyObject* init_exc_synapses(PyObject *self, PyObject* args);
-
-static PyObject* init_inh_synapses(PyObject *self, PyObject* args);
+static PyObject* init_synapses(PyObject *self, PyObject* args);
 
 static PyObject* init_spikes(PyObject *self, PyObject* args);
 
@@ -36,9 +30,7 @@ static PyObject* simulate(PyObject *self, PyObject* args);
 static PyMethodDef module_methods[] = {
 		{"init_network", init_network, METH_VARARGS, init_network_docstring},
 		{"init_neurs", init_neurs, METH_VARARGS, init_neurs_docstring},
-		{"init_conns", init_conns, METH_VARARGS, init_conns_docstring},
-		{"init_exc_synapses", init_exc_synapses, METH_VARARGS, init_exc_synapses_docstring},
-		{"init_inh_synapses", init_inh_synapses, METH_VARARGS, init_inh_synapses_docstring},
+		{"init_exc_synapses", init_synapses, METH_VARARGS, init_synapses_docstring},
 		{"init_spikes", init_spikes, METH_VARARGS, init_spikes_docstring},
 		{"simulate", simulate, METH_VARARGS, init_simulate_docstring},
 		{NULL, NULL, 0, NULL}
@@ -95,44 +87,7 @@ static PyObject* init_neurs(PyObject *self, PyObject* args){
 	return Py_None;
 }
 
-static PyObject* init_conns(PyObject *self, PyObject* args){
-	unsigned int Nparam = 3;
-	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	PyObject* weights_pyobj;
-	if (!PyArg_ParseTuple(args, "OOOO",
-			&weights_pyobj, &args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2])){
-		return NULL;
-	}
-
-	int** args_arr = new int*[Nparam];
-	float* weights_arr;
-	PyObject* arg_npa;
-
-	arg_npa = PyArray_FROM_OTF(weights_pyobj, NPY_FLOAT, NPY_IN_ARRAY);
-	if (arg_npa != NULL){
-		weights_arr = (float*) PyArray_DATA(arg_npa);
-		Py_DECREF(arg_npa);
-	} else{
-		Py_XDECREF(arg_npa);
-		return NULL;
-	}
-	for (int i = 1; i < Nparam; i++){
-		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_INT, NPY_IN_ARRAY);
-		if (arg_npa != NULL){
-			args_arr[i] = (int*) PyArray_DATA(arg_npa);
-			Py_DECREF(arg_npa);
-		} else{
-			Py_XDECREF(arg_npa);
-			return NULL;
-		}
-	}
-	nnsim::init_conns(weights_arr, args_arr[0], args_arr[1], args_arr[2]);
-
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-
-static PyObject* init_exc_synapses(PyObject *self, PyObject* args){
+static PyObject* init_synapses(PyObject *self, PyObject* args){
 	unsigned int Nparam = 7;
 	PyObject** args_pyobj_arr = new PyObject*[Nparam];
 	if (!PyArg_ParseTuple(args, "OOOOOOO",
@@ -152,35 +107,8 @@ static PyObject* init_exc_synapses(PyObject *self, PyObject* args){
 			return NULL;
 		}
 	}
-	nnsim::init_exc_synapses(args_arr[0], args_arr[1], args_arr[2], args_arr[3],
-			args_arr[4], args_arr[5], args_arr[6]);
-
-	Py_INCREF(Py_None);
-	return Py_None;
-}
-
-static PyObject* init_inh_synapses(PyObject *self, PyObject* args){
-	unsigned int Nparam = 7;
-	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	if (!PyArg_ParseTuple(args, "OOOOOOO",
-			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
-			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6])){
-		return NULL;
-	}
-	float** args_arr = new float*[Nparam];
-	PyObject* arg_npa;
-	for (int i = 0; i < Nparam; i++){
-		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_FLOAT, NPY_IN_ARRAY);
-		if (arg_npa != NULL){
-			args_arr[i] = (float*) PyArray_DATA(arg_npa);
-			Py_DECREF(arg_npa);
-		} else{
-			Py_XDECREF(arg_npa);
-			return NULL;
-		}
-	}
-	nnsim::init_inh_synapses(args_arr[0], args_arr[1], args_arr[2], args_arr[3],
-			args_arr[4], args_arr[5], args_arr[6]);
+//	nnsim::init_synapses(args_arr[0], args_arr[1], args_arr[2], args_arr[3],
+//			args_arr[4], args_arr[5], args_arr[6]);
 
 	Py_INCREF(Py_None);
 	return Py_None;

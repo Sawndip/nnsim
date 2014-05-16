@@ -15,15 +15,9 @@ namespace nnsim{
 			float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr,
 			float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k_arr);
 
-	void init_exc_synapses(float* y_exc_arr, float* x_exc_arr,
-			float* u_exc_arr, float* U_exc_arr, float* tau_psc_exc_arr,
-			float* tau_rec_exc_arr, float* tau_fac_exc_arr);
-
-	void init_inh_synapses(float* y_inh_arr, float* x_inh_arr,
-			float* u_inh_arr, float* U_inh_arr, float* tau_psc_inh_arr,
-			float* tau_rec_inh_arr, float* tau_fac_inh_arr);
-
-	void init_conns(float* weights_arr, int* delays_arr, int* pre_conns_arr, int* post_conns_arr);
+	void init_synapses(float* U_arr, float* tau_fac_arr, float* tau_psc_arr,
+			float* tau_rec_arr, float* u_arr, float* x_arr, float* y_arr,
+			float* weights_arr, int* delays_arr, int* pre_conns_arr, int* post_conns_arr, int* receptor_type_arr);
 
 	void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes, unsigned int* syn_num_spikes);
 

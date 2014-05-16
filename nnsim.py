@@ -133,6 +133,7 @@ class SpikingNNSimulator(object):
         
         args = []
         for key, value in sorted(self.exc_syn_arr.items()):
+            print key
             args.append(np.array(value, dtype='float32'))
         nnsim_pykernel.init_exc_synapses(*tuple(args))
         
@@ -152,5 +153,4 @@ if __name__ == "__main__":
 #     print n_exc
 #     print n_inh
     print nnsim.connect(0, 1, 10., 0.1)
-    print nnsim.connect(1, 0, 10., 0.1)
     nnsim.simulate(0.1, 100.)

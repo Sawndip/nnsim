@@ -45,75 +45,45 @@ void init_neurs(float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* 
 	Isyns = Isyn_arr;
 	Erev_exc = Erev_exc_arr;
 	Erev_inh = Erev_inh_arr;
+	AMPA_Amuont = new float[Nneur];
+	GABBA_Amuont = new float[Nneur];
 	for (int i = 0; i < Nneur; i++){
 		printf("%i: %g\n", i, ks[i]);
 	}
 	printf("Success initializing neurons!\n");
 }
 
-void init_exc_synapses(float* y_exc_arr, float* x_exc_arr,
-		float* u_exc_arr, float* U_exc_arr, float* tau_psc_exc_arr,
-		float* tau_rec_exc_arr, float* tau_fac_exc_arr){
-	y_exc = y_exc_arr;
-	x_exc = x_exc_arr;
-	u_exc = u_exc_arr;
-	U_exc = U_exc_arr;
-	tau_psc_exc = tau_psc_exc_arr;
-	tau_rec_exc = tau_rec_exc_arr;
-	tau_fac_exc = tau_fac_exc_arr;
-
-	exp_psc_exc = new float[Nneur];
-	exp_rec_exc = new float[Nneur];
-	exp_fac_exc = new float[Nneur];
-	exp_tau_exc = new float[Nneur];
-	ina_exc = new float[Nneur];
-	for (int n = 0; n < Nneur; n++){
-		exp_psc_exc[n] = expf(-time_step/tau_psc_exc[n]);
-//		printf("%f\n", exp_psc_exc[n]);
-		exp_rec_exc[n] = expf(-time_step/tau_rec_exc[n]);
-		exp_fac_exc[n] = expf(-time_step/tau_fac_exc[n]);
-		exp_tau_exc[n] = (tau_psc_exc[n]*exp_psc_exc[n] - tau_rec_exc[n]*exp_rec_exc[n])/(tau_rec_exc[n] - tau_psc_exc[n]);
-		ina_exc[n] = x_exc[n];
-	}
-	printf("Success initializing excitatory synapses!\n");
-}
-
-void init_inh_synapses(float* y_inh_arr, float* x_inh_arr,
-		float* u_inh_arr, float* U_inh_arr, float* tau_psc_inh_arr,
-		float* tau_rec_inh_arr, float* tau_fac_inh_arr){
-	y_inh = y_inh_arr;
-	x_inh = x_inh_arr;
-	u_inh = u_inh_arr;
-	U_inh = U_inh_arr;
-	tau_psc_inh = tau_psc_inh_arr;
-	tau_rec_inh = tau_rec_inh_arr;
-	tau_fac_inh = tau_fac_inh_arr;
-
-	exp_psc_inh = new float[Nneur];
-	exp_rec_inh = new float[Nneur];
-	exp_fac_inh = new float[Nneur];
-	exp_tau_inh = new float[Nneur];
-	ina_inh = new float[Nneur];
-	for (int n = 0; n < Nneur; n++){
-		printf("x_exc: %f\n", x_exc[n]);
-		exp_psc_inh[n] = expf(-time_step/tau_psc_inh[n]);
-		exp_rec_inh[n] = expf(-time_step/tau_rec_inh[n]);
-		exp_fac_inh[n] = expf(-time_step/tau_fac_inh[n]);
-		exp_tau_inh[n] = (tau_psc_inh[n]*exp_psc_inh[n] - tau_rec_inh[n]*exp_rec_inh[n])/(tau_rec_inh[n] - tau_psc_inh[n]);
-		ina_inh[n] = x_inh[n];
-	}
-	printf("Success initializing inhibitory synapses!\n");
-}
-
-void init_conns(float* weights_arr, int* delays_arr, int* pre_conns_arr, int* post_conns_arr){
+void init_synapses(float* U_arr, float* tau_fac_arr, float* tau_psc_arr,
+		float* tau_rec_arr, float* u_arr, float* x_arr, float* y_arr,
+		float* weights_arr, int* delays_arr, int* pre_conns_arr, int* post_conns_arr, int* receptor_type_arr){
+	ys = y_arr;
+	xs = x_arr;
+	us = u_arr;
+	Us = U_arr;
 	weights = weights_arr;
 	delays = delays_arr;
-	pre_conns = pre_conns_arr;
-	post_conns = post_conns_arr;
-	for (int i = 0; i < Ncon; i++){
-		printf("pre: %i post: %i\n", pre_conns[i], post_conns[i]);
+	pre_syns = pre_conns_arr;
+	post_syns = post_conns_arr;
+	receptor_type = receptor_type_arr;
+	tau_pscs = tau_psc_arr;
+	tau_recs = tau_rec_arr;
+	tau_facs = tau_fac_arr;
+
+	exp_pscs = new float[Nneur];
+	exp_recs = new float[Nneur];
+	exp_facs = new float[Nneur];
+	exp_taus = new float[Nneur];
+
+	for (int c = 0; c < Ncon; c++){
+		exp_pscs[c] = expf(-time_step/tau_psc_arr[c]);
+		exp_recs[c] = expf(-time_step/tau_rec_arr[c]);
+		exp_facs[c] = expf(-time_step/tau_fac_arr[c]);
+		exp_taus[c] = (tau_psc_arr[c]*exp_pscs[c] - tau_rec_arr[c]*exp_recs[c])/(tau_rec_arr[c] - tau_psc_arr[c]);
+		printf("%f\n", tau_pscs[c]);
+//		printf("pre: %i post: %i\n", pre_syns[i], post_syns[i]);
 	}
-	printf("Success initializing connections!\n");
+
+	printf("Synapses initialized successfully!\n");
 }
 
 void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes, unsigned int* syn_num_spikes){
@@ -129,38 +99,30 @@ int simulate(){
 	for (t = 1; t < Tsim; t++){
 		fprintf(res_file, "%f;%f;%f\n", t*time_step, Vms[0], Vms[1]);
 		for (int c = 0; c < Ncon; c++){
-			if (syn_num_spks[c] < neur_num_spks[pre_conns[c]]){
+			xs[c] = ys[c]*exp_taus[c] - (weights[c] - xs[c] - ys[c])*exp_recs[c] + weights[c];
+			ys[c] = ys[c]*exp_pscs[c];
+			us[c] = us[c]*exp_facs[c];
+
+			if (syn_num_spks[c] < neur_num_spks[pre_syns[c]]){
 //				printf("Where are unprocessed spikes at %i time: %i!\n", spk_times[Nneur*syn_num_spks[c] + pre_conns[c]], t);
-				if (spk_times[Nneur*syn_num_spks[c] + pre_conns[c]] == t - delays[c]){
-					int n = post_conns[c];
-					if (weights[c] > 0.0f){
-						u_exc[n] += U_exc[n]*(1.0f - u_exc[n]);
-						float dx = x_exc[n]*u_exc[n]*weights[c]/ina_exc[n];
-						y_exc[n] += dx;
-						x_exc[n] -= dx;
-					} else {
-						u_inh[n] += U_inh[n]*(1.0f - u_inh[n]);
-						float dx = x_inh[n]*u_inh[n]*weights[c]/ina_inh[n];
-						y_inh[n] -= dx;
-						x_inh[n] += dx;
-					}
+				if (spk_times[Nneur*syn_num_spks[c] + pre_syns[c]] == t - delays[c]){
+					us[c] += Us[c]*(1.0f - us[c]);
+					float dx = xs[c]*us[c];
+					ys[c] += dx;
+					xs[c] -= dx;
 					syn_num_spks[c]++;
 				}
+			}
+			// When run parallel this incrementation should be atomic
+			if (receptor_type[pre_syns[c]] == AMPA_RECEPTOR){
+				AMPA_Amuont[post_syns[c]] += ys[c];
+			} else if (receptor_type[pre_syns[c]] == GABBA_RECEPTOR){
+				GABBA_Amuont[post_syns[c]] += ys[c];
 			}
 		}
 
 		for (int n = 0; n < Nneur; n++){
-
-			x_exc[n] = y_exc[n]*exp_tau_exc[n] - (ina_exc[n] - x_exc[n] - y_exc[n])*exp_rec_exc[n] + ina_exc[n];
-			y_exc[n] = y_exc[n]*exp_psc_exc[n];
-			u_exc[n] = u_exc[n]*exp_fac_exc[n];
-
-			x_inh[n] = y_inh[n]*exp_tau_inh[n] - (ina_inh[n] - x_inh[n] - y_inh[n])*exp_rec_inh[n] + ina_inh[n];
-			y_inh[n] = y_inh[n]*exp_psc_inh[n];
-			u_inh[n] = u_inh[n]*exp_fac_inh[n];
-
-
-			float Isyn_new = -y_exc[n]*(Vms[n] - Erev_exc[n]) - y_inh[n]*(Vms[n] - Erev_inh[n]);
+			float Isyn_new = -AMPA_Amuont[n]*(Vms[n] - Erev_exc[n]) - GABBA_Amuont[n]*(Vms[n] - Erev_inh[n]);
 			float Vm = Vms[n];
 			float Um = Ums[n];
 			if (Vm > Vpeaks[n]){
