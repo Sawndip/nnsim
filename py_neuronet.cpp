@@ -19,9 +19,9 @@ static const char init_simulate_docstring[] = "simulate";
 
 static PyObject* init_network(PyObject *self, PyObject* args);
 
-static PyObject* init_neurs(PyObject *self, PyObject* args);
+static PyObject* init_neurs(PyObject *self, PyObject* args, PyObject* keywds);
 
-static PyObject* init_synapses(PyObject *self, PyObject* args);
+static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds);
 
 static PyObject* init_spikes(PyObject *self, PyObject* args);
 
@@ -29,8 +29,8 @@ static PyObject* simulate(PyObject *self, PyObject* args);
 
 static PyMethodDef module_methods[] = {
 		{"init_network", init_network, METH_VARARGS, init_network_docstring},
-		{"init_neurs", init_neurs, METH_VARARGS, init_neurs_docstring},
-		{"init_exc_synapses", init_synapses, METH_VARARGS, init_synapses_docstring},
+		{"init_neurs", (PyCFunction) init_neurs, METH_VARARGS | METH_KEYWORDS, init_neurs_docstring},
+		{"init_exc_synapses", init_synapses, METH_VARARGS | METH_KEYWORDS, init_synapses_docstring},
 		{"init_spikes", init_spikes, METH_VARARGS, init_spikes_docstring},
 		{"simulate", simulate, METH_VARARGS, init_simulate_docstring},
 		{NULL, NULL, 0, NULL}
@@ -56,10 +56,12 @@ static PyObject* init_network(PyObject *self, PyObject* args){
 	return Py_None;
 }
 
-static PyObject* init_neurs(PyObject *self, PyObject* args){
-	unsigned int Nparam = 15;
+static PyObject* init_neurs(PyObject *self, PyObject* args, PyObject* keywds){
+	int Nparam = 15;
 	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOO",
+	 static char *kwlist[] = {"a", "b", "c", "d", "k", "Cm", "Erev_AMPA", "Erev_GABBA",
+			 "Ie", "Isyn", "Um", "Vm", "Vpeak", "Vr", "Vt", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOOOOOO", kwlist,
 			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
 			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6], &args_pyobj_arr[7],
 			&args_pyobj_arr[8], &args_pyobj_arr[9], &args_pyobj_arr[10], &args_pyobj_arr[11],
@@ -87,15 +89,22 @@ static PyObject* init_neurs(PyObject *self, PyObject* args){
 	return Py_None;
 }
 
-static PyObject* init_synapses(PyObject *self, PyObject* args){
-	unsigned int Nparam = 7;
-	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	if (!PyArg_ParseTuple(args, "OOOOOOO",
+static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds){
+	int Nparam = 9;
+	int Nparam_int = 3;
+	PyObject** args_pyobj_arr = new PyObject*[Nparam + Nparam_int];
+
+	static char *kwlist[] = {"tau_rec", "tau_psc", "tau_fac", "U", "x", "y", "u",
+							"weights", "delays", "pre", "post", "receptor_type", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOO0000", kwlist,
 			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
-			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6])){
+			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6], &args_pyobj_arr[7],
+			&args_pyobj_arr[8], &args_pyobj_arr[9], &args_pyobj_arr[10], &args_pyobj_arr[11])){
 		return NULL;
 	}
+
 	float** args_arr = new float*[Nparam];
+	int** args_arr_int = new int*[Nparam_int];
 	PyObject* arg_npa;
 	for (int i = 0; i < Nparam; i++){
 		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_FLOAT, NPY_IN_ARRAY);
@@ -107,8 +116,19 @@ static PyObject* init_synapses(PyObject *self, PyObject* args){
 			return NULL;
 		}
 	}
-//	nnsim::init_synapses(args_arr[0], args_arr[1], args_arr[2], args_arr[3],
-//			args_arr[4], args_arr[5], args_arr[6]);
+	for (int i = Nparam; i < Nparam_int; i++){
+		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_INT, NPY_IN_ARRAY);
+		if (arg_npa != NULL){
+			args_arr_int[i - Nparam] = (int*) PyArray_DATA(arg_npa);
+			Py_DECREF(arg_npa);
+		} else{
+			Py_XDECREF(arg_npa);
+			return NULL;
+		}
+	}
+	nnsim::init_synapses(args_arr[0], args_arr[1], args_arr[2], args_arr[3],
+			args_arr[4], args_arr[5], args_arr[6], args_arr[7],
+			args_arr[8], args_arr_int[9], args_arr_int[10], args_arr_int[11]);
 
 	Py_INCREF(Py_None);
 	return Py_None;

@@ -27,9 +27,9 @@ void init_network(float h, int NumNeur, int NumConns, float SimTime, unsigned in
 	printf("success initializing network!\n");
 }
 
-void init_neurs(float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* Ie_arr, float* Isyn_arr,
-		float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr,
-		float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k_arr){
+void init_neurs(float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k_arr,
+		float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* Ie_arr, float* Isyn_arr,
+		float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr){
 	Vms = Vm_arr;
 	Ums = Um_arr;
 	Ies = Ie_arr;
@@ -53,15 +53,14 @@ void init_neurs(float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* 
 	printf("Success initializing neurons!\n");
 }
 
-void init_synapses(float* U_arr, float* tau_fac_arr, float* tau_psc_arr,
-		float* tau_rec_arr, float* u_arr, float* x_arr, float* y_arr,
-		float* weights_arr, int* delays_arr, int* pre_conns_arr, int* post_conns_arr, int* receptor_type_arr){
+void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, float* U_arr,
+		float* x_arr, float* y_arr, float* u_arr, float* weights_arr, float* delays_arr,
+		int* pre_conns_arr, int* post_conns_arr, int* receptor_type_arr){
 	ys = y_arr;
 	xs = x_arr;
 	us = u_arr;
 	Us = U_arr;
 	weights = weights_arr;
-	delays = delays_arr;
 	pre_syns = pre_conns_arr;
 	post_syns = post_conns_arr;
 	receptor_type = receptor_type_arr;
@@ -73,12 +72,14 @@ void init_synapses(float* U_arr, float* tau_fac_arr, float* tau_psc_arr,
 	exp_recs = new float[Nneur];
 	exp_facs = new float[Nneur];
 	exp_taus = new float[Nneur];
+	delays = new int[Nneur];
 
 	for (int c = 0; c < Ncon; c++){
 		exp_pscs[c] = expf(-time_step/tau_psc_arr[c]);
 		exp_recs[c] = expf(-time_step/tau_rec_arr[c]);
 		exp_facs[c] = expf(-time_step/tau_fac_arr[c]);
 		exp_taus[c] = (tau_psc_arr[c]*exp_pscs[c] - tau_rec_arr[c]*exp_recs[c])/(tau_rec_arr[c] - tau_psc_arr[c]);
+		delays[c] = delays_arr[c]/time_step;
 		printf("%f\n", tau_pscs[c]);
 //		printf("pre: %i post: %i\n", pre_syns[i], post_syns[i]);
 	}

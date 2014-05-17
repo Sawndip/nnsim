@@ -41,20 +41,10 @@ class SpikingNNSimulator(object):
         self.inh_syn_param = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000., 
                               'U': 0.04}
         
-        self.exc_syn_arr = {'y': [], 'x': [], 'u': [], 'U': [], 
-                            'tau_psc': [], 'tau_rec': [], 'tau_fac': []}
+        self.syn_arr = {'tau_psc': [], 'tau_rec': [], 'tau_fac': [], 'U': [], 
+                            'y': [], 'x': [], 'u': [], 'weights': [], 'delays': [], 
+                            'pre': [], 'post': [], 'receptor_type': []}
         
-        self.inh_syn_arr = {'y': [], 'x': [], 'u': [], 'U': [], 
-                            'tau_psc': [], 'tau_rec': [], 'tau_fac': []}
-        
-        self.weights = []
-        
-        self.delays = []
-        
-        self.pre_conns = []
-        
-        self.post_conns = []
-                                  
         self.NumNodes = 0
               
         self.Ncon = 0
@@ -119,29 +109,10 @@ class SpikingNNSimulator(object):
     
     def simulate(self,h, SimTime):
         nnsim_pykernel.init_network(h, self.NumNodes, self.Ncon, SimTime)
-        args = []
-        for key, value in sorted(self.neur_arr.items()):
-#             print key
-            args.append(np.array(value, dtype='float32'))
-        nnsim_pykernel.init_neurs(*tuple(args))
         
-        weights = np.array(self.weights, dtype='float32')
-        delays = np.array(self.weights, dtype='int32')
-        pre_conns = np.array(self.pre_conns, dtype='int32')
-        post_conns = np.array(self.post_conns, dtype='int32')
-        nnsim_pykernel.init_conns(weights, delays, pre_conns, post_conns)
-        
-        args = []
-        for key, value in sorted(self.exc_syn_arr.items()):
-            print key
-            args.append(np.array(value, dtype='float32'))
-        nnsim_pykernel.init_exc_synapses(*tuple(args))
-        
-        args = []
-        for key, value in sorted(self.inh_syn_arr.items()):
-            args.append(np.array(value, dtype='float32'))
-        nnsim_pykernel.init_inh_synapses(*tuple(args))
-        
+        for key, val in self.neur_arr.items():
+            self.neur_arr[key] = np.array(val, dtype='float32')
+        nnsim_pykernel.init_neurs(**self.neur_arr)
 
 print "  --NNSIM--  "
 
@@ -152,5 +123,5 @@ if __name__ == "__main__":
     n_inh = nnsim.new_inh_neurs(10)
 #     print n_exc
 #     print n_inh
-    print nnsim.connect(0, 1, 10., 0.1)
+#     print nnsim.connect(0, 1, 10., 0.1)
     nnsim.simulate(0.1, 100.)
