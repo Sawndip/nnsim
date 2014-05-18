@@ -45,11 +45,11 @@ void init_neurs(float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k
 	Isyns = Isyn_arr;
 	Erev_exc = Erev_exc_arr;
 	Erev_inh = Erev_inh_arr;
-	AMPA_Amuont = new float[Nneur];
-	GABBA_Amuont = new float[Nneur];
-	for (int i = 0; i < Nneur; i++){
-		printf("%i: %g\n", i, ks[i]);
-	}
+	AMPA_Amuont = new float[Nneur]();
+	GABBA_Amuont = new float[Nneur]();
+//	for (int i = 0; i < Nneur; i++){
+//		printf("%i: %g\n", i, as[i]);
+//	}
 	printf("Success initializing neurons!\n");
 }
 
@@ -80,8 +80,7 @@ void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, f
 		exp_facs[c] = expf(-time_step/tau_fac_arr[c]);
 		exp_taus[c] = (tau_psc_arr[c]*exp_pscs[c] - tau_rec_arr[c]*exp_recs[c])/(tau_rec_arr[c] - tau_psc_arr[c]);
 		delays[c] = delays_arr[c]/time_step;
-		printf("%f\n", tau_pscs[c]);
-//		printf("pre: %i post: %i\n", pre_syns[i], post_syns[i]);
+//		printf("pre: %i post: %i\n", pre_syns[c], post_syns[c]);
 	}
 
 	printf("Synapses initialized successfully!\n");
@@ -91,6 +90,7 @@ void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes, unsig
 	spk_times = spike_times;
 	neur_num_spks = neur_num_spikes;
 	syn_num_spks = syn_num_spikes;
+	printf("Array for storing spikes initialized successfully!\n");
 }
 
 int simulate(){
@@ -98,7 +98,6 @@ int simulate(){
 	FILE* res_file;
 	res_file = fopen("oscill.csv", "w");
 	for (t = 1; t < Tsim; t++){
-		fprintf(res_file, "%f;%f;%f\n", t*time_step, Vms[0], Vms[1]);
 		for (int c = 0; c < Ncon; c++){
 			xs[c] = ys[c]*exp_taus[c] - (weights[c] - xs[c] - ys[c])*exp_recs[c] + weights[c];
 			ys[c] = ys[c]*exp_pscs[c];
@@ -121,6 +120,7 @@ int simulate(){
 				GABBA_Amuont[post_syns[c]] += ys[c];
 			}
 		}
+		fprintf(res_file, "%f;%f;%f\n", t*time_step, Vms[0], AMPA_Amuont[1]);
 
 		for (int n = 0; n < Nneur; n++){
 			float Isyn_new = -AMPA_Amuont[n]*(Vms[n] - Erev_exc[n]) - GABBA_Amuont[n]*(Vms[n] - Erev_inh[n]);
@@ -151,10 +151,16 @@ int simulate(){
 				Ums[n] = Um + (u1 + 2.0f*(u2 + u3) + u4)*0.16666666f;
 			}
 			Isyns[n] = Isyn_new;
+			AMPA_Amuont[n] = 0.0f;
+			GABBA_Amuont[n] = 0.0f;
 		}
 	}
 	fclose(res_file);
 	return 0;
 }
 
+	void get_spike_times(float* &spike_times, unsigned int* &num_spikes_on_neur){
+		spike_times = spk_times;
+		num_spikes_on_neur = neur_num_spks;
+	}
 }

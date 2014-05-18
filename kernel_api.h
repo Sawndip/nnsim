@@ -17,7 +17,7 @@ namespace nnsim{
 
 	void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, float* U_arr,
 			float* x_arr, float* y_arr, float* u_arr, float* weights_arr, float* delays_arr,
-			int* pre_conns_arr, int* post_conns_arr, int* receptor_type_arr){
+			int* pre_conns_arr, int* post_conns_arr, int* receptor_type_arr);
 
 	void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes, unsigned int* syn_num_spikes);
 
