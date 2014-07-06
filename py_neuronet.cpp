@@ -60,8 +60,9 @@ static PyObject* init_network(PyObject *self, PyObject* args){
 static PyObject* init_neurs(PyObject *self, PyObject* args, PyObject* keywds){
 	int Nparam = 15;
 	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	 static char *kwlist[] = {"a", "b", "c", "d", "k", "Cm", "Erev_AMPA", "Erev_GABBA",
+	 static char * kwlist[] = {"a", "b", "c", "d", "k", "Cm", "Erev_AMPA", "Erev_GABBA",
 			 "Ie", "Isyn", "Um", "Vm", "Vpeak", "Vr", "Vt", NULL};
+
 	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOOOOOO", kwlist,
 			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
 			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6], &args_pyobj_arr[7],

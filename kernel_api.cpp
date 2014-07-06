@@ -155,11 +155,12 @@ int simulate(){
 			GABBA_Amuont[n] = 0.0f;
 		}
 	}
+
 	fclose(res_file);
 	return 0;
 }
 
-	void get_spike_times(float* &spike_times, unsigned int* &num_spikes_on_neur){
+	void get_spike_times(unsigned int* &spike_times, unsigned int* &num_spikes_on_neur){
 		spike_times = spk_times;
 		num_spikes_on_neur = neur_num_spks;
 	}

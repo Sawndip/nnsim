@@ -12,7 +12,7 @@ np.random.seed(seed=0)
 h = 0.1
 Nneur = 20
 Ncon = 10
-SimTime = 100.
+SimTime = 10000.
 
 class SpikingNNSimulator(object):
     '''
@@ -165,4 +165,4 @@ if __name__ == "__main__":
 
     nnsim.connect(n_exc, n_inh[0], 5., 0.1)
     
-    nnsim.simulate(0.1, 1000.)
+    nnsim.simulate(0.1, SimTime)
