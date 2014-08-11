@@ -12,8 +12,8 @@
 
 namespace nnsim{
 
-	myUint AMPA_RECEPTOR = 1;
-	myUint GABBA_RECEPTOR = 2;
+	unsigned int AMPA_RECEPTOR = 1;
+	unsigned int GABBA_RECEPTOR = 2;
 	// step size in ms
 	float time_step;
 	int Ncon;
@@ -21,23 +21,23 @@ namespace nnsim{
 	unsigned int Tsim;
 
 	// Neural variables and parameters
-	myFloat* Vms;
-	myFloat* Ums;
-	myFloat* Ies;
-	myFloat* as;
-	myFloat* bs;
-	myFloat* cs;
-	myFloat* ds;
-	myFloat* ks;
-	myFloat* Cms;
-	myFloat* Vrs;
-	myFloat* Vts;
-	myFloat* Vpeaks;
-	myFloat* Isyns;
-	myFloat* AMPA_Amuont;
-	myFloat* GABBA_Amuont;
-	myFloat* Erev_exc;
-	myFloat* Erev_inh;
+	float* Vms;
+	float* Ums;
+	float* Ies;
+	float* as;
+	float* bs;
+	float* cs;
+	float* ds;
+	float* ks;
+	float* Cms;
+	float* Vrs;
+	float* Vts;
+	float* Vpeaks;
+	float* Isyns;
+	float* AMPA_Amuont;
+	float* GABBA_Amuont;
+	float* Erev_exc;
+	float* Erev_inh;
 
 	unsigned int* spk_times;
 	unsigned int* neur_num_spks;
@@ -45,37 +45,37 @@ namespace nnsim{
 
 
 	// Synaptic parameters and variables
-	myFloat* ys;
-	myFloat* xs;
-	myFloat* us;
-	myFloat* Us;
-	myFloat* tau_pscs;
-	myFloat* tau_recs;
-	myFloat* tau_facs;
+	float* ys;
+	float* xs;
+	float* us;
+	float* Us;
+	float* tau_pscs;
+	float* tau_recs;
+	float* tau_facs;
 
-	myFloat* exp_pscs;
-	myFloat* exp_recs;
-	myFloat* exp_facs;
-	myFloat* exp_taus;
+	float* exp_pscs;
+	float* exp_recs;
+	float* exp_facs;
+	float* exp_taus;
 
-	myFloat* weights;
-	myUint* delays;
-	myUint* pre_syns;
-	myUint* post_syns;
-	myUint* receptor_type;
+	float* weights;
+	unsigned int* delays;
+	unsigned int* pre_syns;
+	unsigned int* post_syns;
+	unsigned int* receptor_type;
 
 
 	unsigned int recorded_neur_num = 0;
 	unsigned int* neurs_to_record;
-	myFloat* Vm_recorded;
-	myFloat* Um_recorded;
-	myFloat* Isyn_recorded;
+	float* Vm_recorded;
+	float* Um_recorded;
+	float* Isyn_recorded;
 
 	unsigned int recorded_con_num = 0;
 	unsigned int* conns_to_record;
-	myFloat* x_recorded;
-	myFloat* y_recorded;
-	myFloat* u_recorded;
+	float* x_recorded;
+	float* y_recorded;
+	float* u_recorded;
 }
 
 #endif /* KERNEL_DECLARATIONS_H_ */

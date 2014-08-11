@@ -55,7 +55,7 @@ void init_neurs(float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k
 
 void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, float* U_arr,
 		float* x_arr, float* y_arr, float* u_arr, float* weights_arr, float* delays_arr,
-		myUint* pre_conns_arr, myUint* post_conns_arr, myUint* receptor_type_arr){
+		unsigned int* pre_conns_arr, unsigned int* post_conns_arr, unsigned int* receptor_type_arr){
 	ys = y_arr;
 	xs = x_arr;
 	us = u_arr;
@@ -72,7 +72,7 @@ void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, f
 	exp_recs = new float[Nneur];
 	exp_facs = new float[Nneur];
 	exp_taus = new float[Nneur];
-	delays = new myUint[Nneur];
+	delays = new unsigned int[Nneur];
 
 	for (int c = 0; c < Ncon; c++){
 		exp_pscs[c] = expf(-time_step/tau_psc_arr[c]);
@@ -102,7 +102,6 @@ int simulate(){
 			us[c] = us[c]*exp_facs[c];
 
 			if (syn_num_spks[c] < neur_num_spks[pre_syns[c]]){
-				printf("%i\n", t);
 				if (t >= delays[c] && spk_times[Nneur*syn_num_spks[c] + pre_syns[c]] == t - delays[c]){
 					us[c] += Us[c]*(1.0f - us[c]);
 					float dx = xs[c]*us[c];
@@ -185,9 +184,9 @@ int simulate(){
 void init_recorder(unsigned int neur_num, unsigned int* neurs, unsigned int con_num, unsigned int* conns){
 	recorded_neur_num  = neur_num;
 	neurs_to_record = neurs;
-	Vm_recorded = new myFloat[recorded_neur_num*Tsim];
-	Um_recorded = new myFloat[recorded_neur_num*Tsim];
-	Isyn_recorded = new myFloat[recorded_neur_num*Tsim];
+	Vm_recorded = new float[recorded_neur_num*Tsim];
+	Um_recorded = new float[recorded_neur_num*Tsim];
+	Isyn_recorded = new float[recorded_neur_num*Tsim];
 //	printf("Recorder initialized: [");
 //	for (unsigned int i = 0; i < neur_num - 1; i++){
 //		printf("%i,", neurs[i]);
@@ -196,19 +195,19 @@ void init_recorder(unsigned int neur_num, unsigned int* neurs, unsigned int con_
 
 	recorded_con_num = con_num;
 	conns_to_record = conns;
-	x_recorded = new myFloat[recorded_con_num*Tsim];
-	y_recorded = new myFloat[recorded_con_num*Tsim];
-	u_recorded = new myFloat[recorded_con_num*Tsim];
+	x_recorded = new float[recorded_con_num*Tsim];
+	y_recorded = new float[recorded_con_num*Tsim];
+	u_recorded = new float[recorded_con_num*Tsim];
 }
 
-void get_neur_results(myFloat* &Vm_res, myFloat* &Um_res, myFloat* &Isyn_res, unsigned int &N){
+void get_neur_results(float* &Vm_res, float* &Um_res, float* &Isyn_res, unsigned int &N){
 	Vm_res = Vm_recorded;
 	Um_res = Um_recorded;
 	Isyn_res = Isyn_recorded;
 	N = recorded_neur_num*Tsim;
 }
 
-void get_conn_results(myFloat* &x_res, myFloat* &y_res, myFloat* &u_res, unsigned int &N){
+void get_conn_results(float* &x_res, float* &y_res, float* &u_res, unsigned int &N){
 	x_res = x_recorded;
 	y_res = y_recorded;
 	u_res = u_recorded;

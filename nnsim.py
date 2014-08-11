@@ -13,7 +13,7 @@ np.random.seed(seed=0)
 h = .2
 Nneur = 20
 Ncon = 10
-SimTime = 240.
+SimTime = 500.
 
 class SpikingNNSimulator(object):
     '''
@@ -189,8 +189,11 @@ if __name__ == "__main__":
         Isyn.append(Isyn_[start:stop])
         stop += Tsim
         start += Tsim
+        
+    
     t = np.linspace(0, SimTime, Tsim)
-#    pl.plot(t, Vm[0])
-    pl.plot(Vm[0])
-    pl.plot(Vm[1])
-
+    ax0 = pl.subplot(211)    
+    ax1 = pl.subplot(212, sharex=ax0)    
+    ax0.plot(t, Vm[0])
+    ax1.plot(t, Vm[1])
+    

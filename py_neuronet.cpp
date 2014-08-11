@@ -113,7 +113,7 @@ static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds)
 	}
 
 	float** args_arr = new float*[Nparam];
-	nnsim::myUint** args_arr_int = new nnsim::myUint*[Nparam_int];
+	unsigned int** args_arr_int = new unsigned int*[Nparam_int];
 	PyObject* arg_npa;
 	for (int i = 0; i < Nparam; i++){
 		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_FLOAT32, NPY_IN_ARRAY);
@@ -128,7 +128,7 @@ static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds)
 	for (int i = Nparam; i < Nparam + Nparam_int; i++){
 		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_UINT32, NPY_IN_ARRAY);
 		if (arg_npa != NULL){
-			args_arr_int[i - Nparam] = (nnsim::myUint*) PyArray_DATA(arg_npa);
+			args_arr_int[i - Nparam] = (unsigned int*) PyArray_DATA(arg_npa);
 //			Py_DECREF(arg_npa);
 		} else{
 			Py_XDECREF(arg_npa);
@@ -189,9 +189,9 @@ static PyObject* init_recorder(PyObject *self, PyObject* args){
 }
 
 static PyObject* get_results(PyObject *self, PyObject* args){
-	nnsim::myFloat* Vm_res;
-	nnsim::myFloat* Um_res;
-	nnsim::myFloat* Isyn_res;
+	float* Vm_res;
+	float* Um_res;
+	float* Isyn_res;
 	unsigned int N;
 	nnsim::get_neur_results(Vm_res, Um_res, Isyn_res, N);
 
@@ -203,9 +203,9 @@ static PyObject* get_results(PyObject *self, PyObject* args){
 	PyArray_ENABLEFLAGS( (PyArrayObject *) Um_obj_arr, NPY_ARRAY_OWNDATA);
 	PyArray_ENABLEFLAGS( (PyArrayObject *) Isyn_obj_arr, NPY_ARRAY_OWNDATA);
 
-	nnsim::myFloat* x_res;
-	nnsim::myFloat* y_res;
-	nnsim::myFloat* u_res;
+	float* x_res;
+	float* y_res;
+	float* u_res;
 	nnsim::get_conn_results(x_res, y_res, u_res, N);
 	res_dims[0] = N;
 	PyObject* x_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, x_res);
