@@ -9,10 +9,10 @@ SRC_DIR=../
 all: nnsim_pykernel.so
 
 nnsim_pykernel.so: py_neuronet.o libkernel_api.so
-	$(CC) -shared -pthread py_neuronet.o -L. -lkernel_api -o nnsim_pykernel.so -Wl,-rpath,.,-rpath,./Release
+	$(CC) -shared -pthread py_neuronet.o -L. -lkernel_api -o ../nnsim_pykernel.so -Wl,-rpath,.,-rpath,./Release
 
 py_neuronet.o:
-	$(CC) -c -fPIC -I$(NUMPY_INC_DIR) -I$(PY_INC_DIR) $(SRC_DIR)py_neuronet.cpp -o py_neuronet.o
+	$(CC) -c -fPIC  -I$(NUMPY_INC_DIR) -I$(PY_INC_DIR) $(SRC_DIR)py_neuronet.cpp -Wwrite-strings -o py_neuronet.o
 
 libkernel_api.so: kernel_api.o
 	$(CC) -shared kernel_api.o -o libkernel_api.so
@@ -21,4 +21,4 @@ kernel_api.o:
 	$(CC) -c -fPIC -O3 $(SRC_DIR)kernel_api.cpp -o kernel_api.o
 
 clean:
-	rm kernel_api.o libkernel_api.so py_neuronet.o nnsim_pykernel.so
+	rm kernel_api.o libkernel_api.so py_neuronet.o ../nnsim_pykernel.so

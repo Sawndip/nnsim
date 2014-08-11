@@ -8,34 +8,36 @@
 #ifndef KERNEL_DECLARATIONS_H_
 #define KERNEL_DECLARATIONS_H_
 
+#include "kernel_api.h"
+
 namespace nnsim{
-	int AMPA_RECEPTOR = 1;
-	int GABBA_RECEPTOR = 2;
+
+	myUint AMPA_RECEPTOR = 1;
+	myUint GABBA_RECEPTOR = 2;
 	// step size in ms
 	float time_step;
 	int Ncon;
 	int Nneur;
 	unsigned int Tsim;
-	unsigned int t;
 
 	// Neural variables and parameters
-	float* Vms;
-	float* Ums;
-	float* Ies;
-	float* as;
-	float* bs;
-	float* cs;
-	float* ds;
-	float* ks;
-	float* Cms;
-	float* Vrs;
-	float* Vts;
-	float* Vpeaks;
-	float* Isyns;
-	float* AMPA_Amuont;
-	float* GABBA_Amuont;
-	float* Erev_exc;
-	float* Erev_inh;
+	myFloat* Vms;
+	myFloat* Ums;
+	myFloat* Ies;
+	myFloat* as;
+	myFloat* bs;
+	myFloat* cs;
+	myFloat* ds;
+	myFloat* ks;
+	myFloat* Cms;
+	myFloat* Vrs;
+	myFloat* Vts;
+	myFloat* Vpeaks;
+	myFloat* Isyns;
+	myFloat* AMPA_Amuont;
+	myFloat* GABBA_Amuont;
+	myFloat* Erev_exc;
+	myFloat* Erev_inh;
 
 	unsigned int* spk_times;
 	unsigned int* neur_num_spks;
@@ -43,24 +45,37 @@ namespace nnsim{
 
 
 	// Synaptic parameters and variables
-	float* ys;
-	float* xs;
-	float* us;
-	float* Us;
-	float* tau_pscs;
-	float* tau_recs;
-	float* tau_facs;
+	myFloat* ys;
+	myFloat* xs;
+	myFloat* us;
+	myFloat* Us;
+	myFloat* tau_pscs;
+	myFloat* tau_recs;
+	myFloat* tau_facs;
 
-	float* exp_pscs;
-	float* exp_recs;
-	float* exp_facs;
-	float* exp_taus;
+	myFloat* exp_pscs;
+	myFloat* exp_recs;
+	myFloat* exp_facs;
+	myFloat* exp_taus;
 
-	float* weights;
-	int* delays;
-	int* pre_syns;
-	int* post_syns;
-	int* receptor_type;
+	myFloat* weights;
+	myUint* delays;
+	myUint* pre_syns;
+	myUint* post_syns;
+	myUint* receptor_type;
+
+
+	unsigned int recorded_neur_num = 0;
+	unsigned int* neurs_to_record;
+	myFloat* Vm_recorded;
+	myFloat* Um_recorded;
+	myFloat* Isyn_recorded;
+
+	unsigned int recorded_con_num = 0;
+	unsigned int* conns_to_record;
+	myFloat* x_recorded;
+	myFloat* y_recorded;
+	myFloat* u_recorded;
 }
 
 #endif /* KERNEL_DECLARATIONS_H_ */

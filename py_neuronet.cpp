@@ -15,6 +15,8 @@ static const char init_network_docstring[] = "init_network";
 static const char init_neurs_docstring[] = "init_neurs";
 static const char init_synapses_docstring[] = "init_synapses";
 static const char init_spikes_docstring[] = "init_spikes";
+static const char init_recorder_docstring[] = "init_recorder";
+static const char get_results_docstring[] = "get_results";
 static const char init_simulate_docstring[] = "simulate";
 
 static PyObject* init_network(PyObject *self, PyObject* args);
@@ -27,11 +29,17 @@ static PyObject* init_spikes(PyObject *self, PyObject* args, PyObject* keywds);
 
 static PyObject* simulate(PyObject *self, PyObject* args);
 
+static PyObject* init_recorder(PyObject *self, PyObject* args);
+
+static PyObject* get_results(PyObject *self, PyObject* args);
+
 static PyMethodDef module_methods[] = {
 		{"init_network", init_network, METH_VARARGS, init_network_docstring},
 		{"init_neurs", (PyCFunction) init_neurs, METH_VARARGS | METH_KEYWORDS, init_neurs_docstring},
 		{"init_synapses", (PyCFunction) init_synapses, METH_VARARGS | METH_KEYWORDS, init_synapses_docstring},
 		{"init_spikes", (PyCFunction) init_spikes, METH_VARARGS | METH_KEYWORDS, init_spikes_docstring},
+		{"init_recorder", init_recorder, METH_VARARGS, init_recorder_docstring},
+		{"get_results", get_results, METH_VARARGS, get_results_docstring},
 		{"simulate", simulate, METH_VARARGS, init_simulate_docstring},
 		{NULL, NULL, 0, NULL}
 	};
@@ -47,11 +55,10 @@ PyMODINIT_FUNC initnnsim_pykernel(){
 static PyObject* init_network(PyObject *self, PyObject* args){
 	float SimulationTime, h;
 	int Nneur, Ncon;
-
 	if (!PyArg_ParseTuple(args, "fiif", &h, &Nneur, &Ncon, &SimulationTime)){
 		 return NULL;
 	 }
-	nnsim::init_network(h, Nneur, Ncon, SimulationTime, 0);
+	nnsim::init_network(h, Nneur, Ncon, SimulationTime);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -106,7 +113,7 @@ static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds)
 	}
 
 	float** args_arr = new float*[Nparam];
-	int** args_arr_int = new int*[Nparam_int];
+	nnsim::myUint** args_arr_int = new nnsim::myUint*[Nparam_int];
 	PyObject* arg_npa;
 	for (int i = 0; i < Nparam; i++){
 		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_FLOAT32, NPY_IN_ARRAY);
@@ -119,9 +126,9 @@ static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds)
 		}
 	}
 	for (int i = Nparam; i < Nparam + Nparam_int; i++){
-		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_INT32, NPY_IN_ARRAY);
+		arg_npa = PyArray_FROM_OTF(args_pyobj_arr[i], NPY_UINT32, NPY_IN_ARRAY);
 		if (arg_npa != NULL){
-			args_arr_int[i - Nparam] = (int*) PyArray_DATA(arg_npa);
+			args_arr_int[i - Nparam] = (nnsim::myUint*) PyArray_DATA(arg_npa);
 //			Py_DECREF(arg_npa);
 		} else{
 			Py_XDECREF(arg_npa);
@@ -160,6 +167,56 @@ static PyObject* init_spikes(PyObject *self, PyObject* args, PyObject* keywds){
 
 	Py_INCREF(Py_None);
 	return Py_None;
+}
+
+static PyObject* init_recorder(PyObject *self, PyObject* args){
+	unsigned int neur_num, con_num;
+	unsigned int* neurs;
+	unsigned int* conns;
+	PyObject* neurs_nparr;
+	PyObject* conns_nparr;
+
+	if (!PyArg_ParseTuple(args, "IOIO", &neur_num, &neurs_nparr, &con_num, &conns_nparr)){
+		 return NULL;
+	}
+	neurs = (unsigned int*) PyArray_DATA(PyArray_FROM_OTF(neurs_nparr, NPY_UINT32, NPY_IN_ARRAY));
+	conns = (unsigned int*) PyArray_DATA(PyArray_FROM_OTF(conns_nparr, NPY_UINT32, NPY_IN_ARRAY));
+
+	nnsim::init_recorder(neur_num, neurs, con_num, conns);
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject* get_results(PyObject *self, PyObject* args){
+	nnsim::myFloat* Vm_res;
+	nnsim::myFloat* Um_res;
+	nnsim::myFloat* Isyn_res;
+	unsigned int N;
+	nnsim::get_neur_results(Vm_res, Um_res, Isyn_res, N);
+
+	npy_intp res_dims[] = {N};
+	PyObject* Vm_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, Vm_res);
+	PyObject* Um_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, Um_res);
+	PyObject* Isyn_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, Isyn_res);
+	PyArray_ENABLEFLAGS( (PyArrayObject *) Vm_obj_arr, NPY_ARRAY_OWNDATA);
+	PyArray_ENABLEFLAGS( (PyArrayObject *) Um_obj_arr, NPY_ARRAY_OWNDATA);
+	PyArray_ENABLEFLAGS( (PyArrayObject *) Isyn_obj_arr, NPY_ARRAY_OWNDATA);
+
+	nnsim::myFloat* x_res;
+	nnsim::myFloat* y_res;
+	nnsim::myFloat* u_res;
+	nnsim::get_conn_results(x_res, y_res, u_res, N);
+	res_dims[0] = N;
+	PyObject* x_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, x_res);
+	PyObject* y_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, y_res);
+	PyObject* u_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, u_res);
+	PyArray_ENABLEFLAGS( (PyArrayObject *) x_obj_arr, NPY_ARRAY_OWNDATA);
+	PyArray_ENABLEFLAGS( (PyArrayObject *) y_obj_arr, NPY_ARRAY_OWNDATA);
+	PyArray_ENABLEFLAGS( (PyArrayObject *) u_obj_arr, NPY_ARRAY_OWNDATA);
+
+	PyObject* result = Py_BuildValue("(OOOOOO)", Vm_obj_arr, Um_obj_arr, Isyn_obj_arr, x_obj_arr, y_obj_arr, u_obj_arr);
+	return result;
 }
 
 static PyObject* simulate(PyObject *self, PyObject* args){

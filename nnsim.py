@@ -7,12 +7,13 @@ Created on 13 мая 2014 г.
 
 import nnsim_pykernel
 import numpy as np
+import matplotlib.pyplot as pl
 from numpy.core.setup import check_types
 np.random.seed(seed=0)
-h = 0.1
+h = .2
 Nneur = 20
 Ncon = 10
-SimTime = 10000.
+SimTime = 240.
 
 class SpikingNNSimulator(object):
     '''
@@ -91,12 +92,12 @@ class SpikingNNSimulator(object):
         return [arg]
             
     
-    def connect(self, pre, post, weights=0, delays=0, syn=None, **kwargs):
+    def connect(self, pre, post, weights=0., delays=0., syn=None, **kwargs):
         pre = self.check_type(pre)
         post = self.check_type(post)
         weights = self.check_type(weights, ar_type=float)
         delays = self.check_type(delays, ar_type=float)
-        print ((len(weights) != 1))
+#        print ((len(weights) != 1))
         if (len(pre) != len(post)):
                 raise RuntimeError("Lengths of pre and post must be equal")
         
@@ -125,7 +126,8 @@ class SpikingNNSimulator(object):
         elif (syn == self.inh_syn):
             for key, value in self.inh_syn_param.items():
                 self.syn_arr[key] = [value]*len(pre)
-        self.syn_arr['x'] = [1.]*len(pre)
+#        self.syn_arr['x'] = [1.]*len(pre)
+        self.syn_arr['x'] = self.syn_arr['weights']
         self.syn_arr['y'] = [0.]*len(pre)
         self.syn_arr['u'] = [0.]*len(pre)
         
@@ -144,7 +146,7 @@ class SpikingNNSimulator(object):
         for key, val in self.syn_arr.items():
             args[key] = np.array(val, dtype='float32')
         for key in ['pre', 'post', 'receptor_type']:
-            args[key] = np.array(self.syn_arr[key], dtype='int32')
+            args[key] = np.array(self.syn_arr[key], dtype='uint32')
         nnsim_pykernel.init_synapses(**args)
         
         args = {}
@@ -153,16 +155,42 @@ class SpikingNNSimulator(object):
         args['syn_num_spk'] = np.zeros(self.Ncon, dtype='uint32')
         nnsim_pykernel.init_spikes(**args)
         
-        nnsim_pykernel.simulate()
+        self.rec_from_neur = [0, 1]
+        self.rec_from_syn = [0]
+        nnsim_pykernel.init_recorder(len(self.rec_from_neur), self.rec_from_neur, 
+                                     len(self.rec_from_syn), self.rec_from_syn)
 
+        nnsim_pykernel.simulate()
+        
+            
 print "  --NNSIM--  "
 
 if __name__ == "__main__":
     nnsim = SpikingNNSimulator()
     
     n_exc = nnsim.new_exc_neurs(1, params={'Ie':40.})
-    n_inh = nnsim.new_inh_neurs(10)
+    n_inh = nnsim.new_inh_neurs(1)
 
-    nnsim.connect(n_exc, n_inh[0], 5., 0.1)
+    nnsim.connect(n_exc, n_inh, 10.0, 10.)
+
     
-    nnsim.simulate(0.1, SimTime)
+    nnsim.simulate(h, SimTime)
+
+    (Vm_, Um_, Isyn_, x_, y_, u_) = nnsim_pykernel.get_results()
+    Vm = []
+    Um = []
+    Isyn = []
+    start = 0
+    Tsim = len(Vm_)/len(nnsim.rec_from_neur)
+    stop = Tsim
+    for i in range(len(nnsim.rec_from_neur)):
+        Vm.append(Vm_[start:stop])
+        Um.append(Um_[start:stop])
+        Isyn.append(Isyn_[start:stop])
+        stop += Tsim
+        start += Tsim
+    t = np.linspace(0, SimTime, Tsim)
+#    pl.plot(t, Vm[0])
+    pl.plot(Vm[0])
+    pl.plot(Vm[1])
+

@@ -2,6 +2,7 @@ import numpy as np
 import csv
 import matplotlib.pylab as pl
 
+#f = open('res/1_neur_oscill.csv', "r")
 f = open('oscill.csv', "r")
 rdr = csv.reader(f, delimiter=";")
 t = []
