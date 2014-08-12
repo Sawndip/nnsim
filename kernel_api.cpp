@@ -184,6 +184,9 @@ int simulate(){
 void init_recorder(unsigned int neur_num, unsigned int* neurs, unsigned int con_num, unsigned int* conns){
 	recorded_neur_num  = neur_num;
 	neurs_to_record = neurs;
+	delete[] Vm_recorded;
+	delete[] Um_recorded;
+	delete[] Isyn_recorded;
 	Vm_recorded = new float[recorded_neur_num*Tsim];
 	Um_recorded = new float[recorded_neur_num*Tsim];
 	Isyn_recorded = new float[recorded_neur_num*Tsim];
@@ -195,6 +198,9 @@ void init_recorder(unsigned int neur_num, unsigned int* neurs, unsigned int con_
 
 	recorded_con_num = con_num;
 	conns_to_record = conns;
+	delete[] x_recorded;
+	delete[] y_recorded;
+	delete[] u_recorded;
 	x_recorded = new float[recorded_con_num*Tsim];
 	y_recorded = new float[recorded_con_num*Tsim];
 	u_recorded = new float[recorded_con_num*Tsim];

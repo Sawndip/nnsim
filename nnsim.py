@@ -8,18 +8,13 @@ Created on 13 мая 2014 г.
 import nnsim_pykernel
 import numpy as np
 import matplotlib.pyplot as pl
-from numpy.core.setup import check_types
 np.random.seed(seed=0)
-h = .2
+h = .5
 Nneur = 20
 Ncon = 10
 SimTime = 500.
 
 class SpikingNNSimulator(object):
-    '''
-    Singltone class for simulator
-    '''
-
 
     def __init__(self):
         '''
@@ -32,7 +27,6 @@ class SpikingNNSimulator(object):
         self.inh_neur_param = {'a': 0.03, 'b': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
                                'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'Vm': -60., 'Um': 0., 
                                'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
-        
 
         self.exc_syn_param = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001, 
                               'U': 0.5, 'receptor_type': 1}
@@ -53,9 +47,6 @@ class SpikingNNSimulator(object):
         self.NumNodes = 0
               
         self.Ncon = 0
-        
-        self.exc_syn = 1;
-        self.inh_syn = 2;
         
     def fill_neurs(self, N, params={}, default_params=None, **kwargs):
         if (default_params == None):
@@ -80,7 +71,15 @@ class SpikingNNSimulator(object):
 
     def new_inh_neurs(self, N, params={}, **kwargs):
         return self.fill_neurs(N, params=params, default_params=self.inh_neur_param, **kwargs)
-    
+
+    def create(self, N, n_type="exc", params={}, **kwargs):
+        if n_type == "exc":
+            return self.fill_neurs(N, params=params, default_params=self.exc_neur_param, **kwargs)
+        elif n_type == "inh":
+            return self.fill_neurs(N, params=params, default_params=self.inh_neur_param, **kwargs)
+                    
+            
+
     def check_type(self, arg, ar_type=int):
         if type(arg) == list:
             for i in arg:
@@ -92,12 +91,12 @@ class SpikingNNSimulator(object):
         return [arg]
             
     
-    def connect(self, pre, post, weights=0., delays=0., syn=None, **kwargs):
+    def connect(self, pre, post, weights=0., delays=0., syn="exc", **kwargs):
         pre = self.check_type(pre)
         post = self.check_type(post)
         weights = self.check_type(weights, ar_type=float)
         delays = self.check_type(delays, ar_type=float)
-#        print ((len(weights) != 1))
+
         if (len(pre) != len(post)):
                 raise RuntimeError("Lengths of pre and post must be equal")
         
@@ -118,12 +117,11 @@ class SpikingNNSimulator(object):
             self.syn_arr['weights'].extend(weights*len(pre))
         else:
             self.syn_arr['weights'].extend(weights)
-        if (syn == None):
-            syn = self.exc_syn
-        if (syn == self.exc_syn):
+
+        if (syn == "exc"):
             for key, value in self.exc_syn_param.items():
                 self.syn_arr[key] = [value]*len(pre)
-        elif (syn == self.inh_syn):
+        elif (syn == "inh"):
             for key, value in self.inh_syn_param.items():
                 self.syn_arr[key] = [value]*len(pre)
 #        self.syn_arr['x'] = [1.]*len(pre)
@@ -142,6 +140,9 @@ class SpikingNNSimulator(object):
             args[key] = np.array(val, dtype='float32')
         nnsim_pykernel.init_neurs(**args)
         
+        for key, val in self.neur_arr.items():
+            del args[key]
+
         args = {}
         for key, val in self.syn_arr.items():
             args[key] = np.array(val, dtype='float32')
@@ -168,10 +169,12 @@ print "  --NNSIM--  "
 if __name__ == "__main__":
     nnsim = SpikingNNSimulator()
     
-    n_exc = nnsim.new_exc_neurs(1, params={'Ie':40.})
-    n_inh = nnsim.new_inh_neurs(1)
-
-    nnsim.connect(n_exc, n_inh, 10.0, 10.)
+#    n_exc = nnsim.new_exc_neurs(1, params={'Ie':40.})
+#    n_inh = nnsim.new_inh_neurs(1)
+    n_exc = nnsim.create(1, n_type="exc", params={'Ie':40.})
+    n_inh = nnsim.create(1, n_type="inh")
+    
+    nnsim.connect(n_exc, n_inh, 10.0, 10., "exc")
 
     
     nnsim.simulate(h, SimTime)
@@ -192,8 +195,8 @@ if __name__ == "__main__":
         
     
     t = np.linspace(0, SimTime, Tsim)
+    pl.figure()    
     ax0 = pl.subplot(211)    
     ax1 = pl.subplot(212, sharex=ax0)    
     ax0.plot(t, Vm[0])
     ax1.plot(t, Vm[1])
-    
