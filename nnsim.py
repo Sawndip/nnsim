@@ -7,196 +7,192 @@ Created on 13 мая 2014 г.
 
 import nnsim_pykernel
 import numpy as np
-import matplotlib.pyplot as pl
 np.random.seed(seed=0)
-h = .5
-Nneur = 20
-Ncon = 10
-SimTime = 500.
 
-class SpikingNNSimulator(object):
+exc_neur_param = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
+                       'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -45., 'Um': 0., 
+                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
 
-    def __init__(self):
-        '''
-        Constructor
-        '''
-        self.exc_neur_param = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
-                               'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -45., 'Um': 0., 
-                               'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
+inh_neur_param = {'a': 0.03, 'b': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
+                       'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'Vm': -60., 'Um': 0., 
+                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
 
-        self.inh_neur_param = {'a': 0.03, 'b': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
-                               'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'Vm': -60., 'Um': 0., 
-                               'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
+exc_syn_param = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001, 
+                      'U': 0.5, 'receptor_type': 1}
 
-        self.exc_syn_param = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001, 
-                              'U': 0.5, 'receptor_type': 1}
-        
-        self.inh_syn_param = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000., 
-                              'U': 0.04, 'receptor_type': 2}
-        
-        self.syn_arr = {'tau_psc': [], 'tau_rec': [], 'tau_fac': [], 'U': [], 
-                            'y': [], 'x': [], 'u': [], 'weights': [], 'delays': [], 
-                            'pre': [], 'post': [], 'receptor_type': []}
+inh_syn_param = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000., 
+                      'U': 0.04, 'receptor_type': 2}
 
-        self.neur_arr = {'a': [], 'b': [], 'c': [], 'd': [], 'k': [], 'Cm': [], 
-                               'Vr': [], 'Vt': [], 'Vpeak': [], 'Vm': [], 'Um': [], 
-                               'Erev_AMPA': [], 'Erev_GABBA': [], 'Isyn': [], 'Ie': []}
-        
-        self.spikes_arr = {'sps_times': [], 'neur_num_spk': [], 'syn_num_spk': []}
-        
-        self.NumNodes = 0
-              
-        self.Ncon = 0
-        
-    def fill_neurs(self, N, params={}, default_params=None, **kwargs):
-        if (default_params == None):
-            self.exc_neur_param
-        n_params = default_params.copy()
-                         
-        for key, value in params.items():
-            n_params[key] = value
+syn_arr = {'tau_psc': [], 'tau_rec': [], 'tau_fac': [], 'U': [], 
+                    'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [], 
+                    'pre': [], 'post': [], 'receptor_type': []}
 
-        for key, value in kwargs.items():
-            if (len(kwargs[key]) == N):
-                self.neur_arr[key].extend(list(value))
-                n_params.pop(key)
-            
-        for key, value in n_params.items():
-                self.neur_arr[key].extend([value]*N)
-        self.NumNodes += N
-        return [i for i in xrange(self.NumNodes - N, self.NumNodes)]
+syn_default = {'y': 0., 'x': 1., 'u': 0., 'weight': 1., 'delay': 0.}
 
-    def new_exc_neurs(self, N, params={}, **kwargs):
-        return self.fill_neurs(N, params=params, default_params=self.exc_neur_param, **kwargs)
+neur_arr = {'a': [], 'b': [], 'c': [], 'd': [], 'k': [], 'Cm': [], 
+                       'Vr': [], 'Vt': [], 'Vpeak': [], 'Vm': [], 'Um': [], 
+                       'Erev_AMPA': [], 'Erev_GABBA': [], 'Isyn': [], 'Ie': []}
 
-    def new_inh_neurs(self, N, params={}, **kwargs):
-        return self.fill_neurs(N, params=params, default_params=self.inh_neur_param, **kwargs)
+NumNodes = 0
 
-    def create(self, N, n_type="exc", params={}, **kwargs):
-        if n_type == "exc":
-            return self.fill_neurs(N, params=params, default_params=self.exc_neur_param, **kwargs)
-        elif n_type == "inh":
-            return self.fill_neurs(N, params=params, default_params=self.inh_neur_param, **kwargs)
-                    
-            
+NumConns = 0
 
-    def check_type(self, arg, ar_type=int):
-        if type(arg) == list:
-            for i in arg:
-                if type(i) != ar_type:
-                    raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
-            return arg
-        elif type(arg) != ar_type:
-            raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
-        return [arg]
-            
+def check_type(arg, ar_type=int):
+    if type(arg) == list:
+        for i in arg:
+            if type(i) != ar_type:
+                raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
+        return arg
+    elif type(arg) != ar_type:
+        raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
+    return [arg]
     
-    def connect(self, pre, post, weights=0., delays=0., syn="exc", **kwargs):
-        pre = self.check_type(pre)
-        post = self.check_type(post)
-        weights = self.check_type(weights, ar_type=float)
-        delays = self.check_type(delays, ar_type=float)
+def fill_neurs(N, params={}, default_params=None, **kwargs):
+    global neur_arr, NumNodes
+    n_params = default_params.copy()
+                     
+    for key, value in params.items():
+        n_params[key] = value
 
+    for key, value in kwargs.items():
+        if (len(kwargs[key]) == N):
+            neur_arr[key].extend(list(value))
+            n_params.pop(key)
+        
+    for key, value in n_params.items():
+            neur_arr[key].extend([value]*N)
+    NumNodes += N
+    return [i for i in xrange(NumNodes - N, NumNodes)]
+
+def create(N, n_type="exc", params={}, **kwargs):
+    if n_type == "exc":
+        return fill_neurs(N, params=params, default_params=exc_neur_param, **kwargs)
+    elif n_type == "inh":
+        return fill_neurs(N, params=params, default_params=inh_neur_param, **kwargs)
+                
+def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
+    global syn_arr, NumConns
+    pre = check_type(pre)
+    post = check_type(post)
+    pre_ext = []
+    post_ext = []
+    syn_ext ={}
+    if(conn_spec == 'one_to_one'):
         if (len(pre) != len(post)):
                 raise RuntimeError("Lengths of pre and post must be equal")
-        
-        if (len(weights) != len(pre) and len(weights) != 1):
-                raise RuntimeError("Lengths of weights must be 1 or equal to len of pre/post")
+        pre_ext = pre
+        post_ext = post
+    elif (conn_spec == 'all_to_all'):
+        for i in pre:
+            pre_ext.extend([i]*len(post))
+            post_ext.extend(post)
 
-        if (len(delays) != len(pre) and len(delays) != 1):
-                raise RuntimeError("Lengths of weights must be 1 or equal to len of pre/post")
-        
-        self.syn_arr['pre'].extend(pre)
-        self.syn_arr['post'].extend(post)
-        if (len(delays) == 1):
-            self.syn_arr['delays'].extend(delays*len(pre))
-        else:
-            self.syn_arr['delays'].extend(delays)
-
-        if (len(weights) == 1):
-            self.syn_arr['weights'].extend(weights*len(pre))
-        else:
-            self.syn_arr['weights'].extend(weights)
-
-        if (syn == "exc"):
-            for key, value in self.exc_syn_param.items():
-                self.syn_arr[key] = [value]*len(pre)
-        elif (syn == "inh"):
-            for key, value in self.inh_syn_param.items():
-                self.syn_arr[key] = [value]*len(pre)
-#        self.syn_arr['x'] = [1.]*len(pre)
-        self.syn_arr['x'] = self.syn_arr['weights']
-        self.syn_arr['y'] = [0.]*len(pre)
-        self.syn_arr['u'] = [0.]*len(pre)
-        
-        self.Ncon += len(pre)
-#        print self.syn_arr
-        return [i for i in xrange(self.Ncon - len(pre), self.Ncon)]
+    if (syn == "exc"):
+        for key, value in exc_syn_param.items():
+            syn_ext[key] = [value]*len(pre_ext)
+    elif (syn == "inh"):
+        for key, value in inh_syn_param.items():
+            syn_ext[key] = [value]*len(pre_ext)
     
-    def simulate(self, h, SimTime):
-        nnsim_pykernel.init_network(h, self.NumNodes, self.Ncon, SimTime)
-        args = {}
-        for key, val in self.neur_arr.items():
-            args[key] = np.array(val, dtype='float32')
-        nnsim_pykernel.init_neurs(**args)
-        
-        for key, val in self.neur_arr.items():
-            del args[key]
-
-        args = {}
-        for key, val in self.syn_arr.items():
-            args[key] = np.array(val, dtype='float32')
-        for key in ['pre', 'post', 'receptor_type']:
-            args[key] = np.array(self.syn_arr[key], dtype='uint32')
-        nnsim_pykernel.init_synapses(**args)
-        
-        args = {}
-        args['sps_times'] = np.zeros(self.NumNodes*SimTime/25., dtype='uint32')
-        args['neur_num_spk'] = np.zeros(self.NumNodes, dtype='uint32')
-        args['syn_num_spk'] = np.zeros(self.Ncon, dtype='uint32')
-        nnsim_pykernel.init_spikes(**args)
-        
-        self.rec_from_neur = [0, 1]
-        self.rec_from_syn = [0]
-        nnsim_pykernel.init_recorder(len(self.rec_from_neur), self.rec_from_neur, 
-                                     len(self.rec_from_syn), self.rec_from_syn)
-
-        nnsim_pykernel.simulate()
-        
-            
-print "  --NNSIM--  "
-
-if __name__ == "__main__":
-    nnsim = SpikingNNSimulator()
+    for key, value in syn_default.items():
+            syn_ext[key] = [value]*len(pre_ext)
     
-#    n_exc = nnsim.new_exc_neurs(1, params={'Ie':40.})
-#    n_inh = nnsim.new_inh_neurs(1)
-    n_exc = nnsim.create(1, n_type="exc", params={'Ie':40.})
-    n_inh = nnsim.create(1, n_type="inh")
-    
-    nnsim.connect(n_exc, n_inh, 10.0, 10., "exc")
+    for key, value in kwargs.items():
+        if type(value) != dict:
+            syn_ext[key] = [value]*len(pre_ext)
+        elif type(value) == dict:
+            std = value['std']
+            mean = value['mean']
+            syn_ext[key] = np.array(mean + std*np.random.randn(len(pre_ext)), dtype='float32')
 
+    syn_ext['pre'] = pre_ext
+    syn_ext['post'] = post_ext
+    syn_arr = syn_ext
+    NumConns += len(pre_ext)
     
-    nnsim.simulate(h, SimTime)
+    return [i for i in xrange(NumConns - len(pre_ext), NumConns)]
 
+def init_recorder(rec_from_n=[], rec_from_s=[]):
+    global rec_from_neur, rec_from_syn
+    rec_from_neur = check_type(rec_from_n)
+    rec_from_syn = check_type(rec_from_s)
+
+def get_results():
     (Vm_, Um_, Isyn_, x_, y_, u_) = nnsim_pykernel.get_results()
     Vm = []
     Um = []
     Isyn = []
+    x = []
+    y = []
+    u = []
+    if len(Vm_) == 0:
+        return (Vm, Um, Isyn, x, y, u)
+        
     start = 0
-    Tsim = len(Vm_)/len(nnsim.rec_from_neur)
+    Tsim = len(Vm_)/len(rec_from_neur)
     stop = Tsim
-    for i in range(len(nnsim.rec_from_neur)):
+    for i in range(len(rec_from_neur)):
         Vm.append(Vm_[start:stop])
         Um.append(Um_[start:stop])
         Isyn.append(Isyn_[start:stop])
         stop += Tsim
         start += Tsim
-        
     
-    t = np.linspace(0, SimTime, Tsim)
-    pl.figure()    
-    ax0 = pl.subplot(211)    
-    ax1 = pl.subplot(212, sharex=ax0)    
-    ax0.plot(t, Vm[0])
-    ax1.plot(t, Vm[1])
+    if len(x_) == 0:
+        return (Vm, Um, Isyn, x, y, u)
+
+    start = 0
+    Tsim = len(x_)/len(rec_from_syn)
+    stop = Tsim
+    for i in range(len(rec_from_syn)):
+        x.append(x_[start:stop])
+        y.append(y_[start:stop])
+        u.append(u_[start:stop])
+        stop += Tsim
+        start += Tsim
+    
+    return (Vm, Um, Isyn, x, y, u)
+
+def get_spk_times():
+    global spk_times, n_spike
+    (spk_times, n_spike) = nnsim_pykernel.get_spk_times()
+   
+    spikes = []
+    for i in xrange(NumNodes):
+        spikes.append([spk_times[NumNodes*sn + i]*tm_step for sn in xrange(n_spike[i])])
+    
+    return spikes
+    
+    
+def simulate(h, SimTime):
+    global tm_step
+    tm_step = h
+    nnsim_pykernel.init_network(h, NumNodes, NumConns, SimTime)
+    args = {}
+    for key, val in neur_arr.items():
+        args[key] = np.array(val, dtype='float32')
+    nnsim_pykernel.init_neurs(**args)
+    
+#    for key, val in neur_arr.items():
+#        del args[key]
+
+    args = {}
+    for key, val in syn_arr.items():
+        args[key] = np.array(val, dtype='float32')
+    for key in ['pre', 'post', 'receptor_type']:
+        args[key] = np.array(syn_arr[key], dtype='uint32')
+    nnsim_pykernel.init_synapses(**args)
+    
+    args = {}
+    args['sps_times'] = np.zeros(NumNodes*SimTime/25., dtype='uint32')
+    args['neur_num_spk'] = np.zeros(NumNodes, dtype='uint32')
+    args['syn_num_spk'] = np.zeros(NumConns, dtype='uint32')
+    nnsim_pykernel.init_spikes(**args)
+    
+    nnsim_pykernel.init_recorder(len(rec_from_neur), rec_from_neur, 
+                                 len(rec_from_syn), rec_from_syn)
+
+    nnsim_pykernel.simulate()
+
+
+print "  --NNSIM--  "

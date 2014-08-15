@@ -20,7 +20,8 @@ namespace nnsim{
 			float* x_arr, float* y_arr, float* u_arr, float* weights_arr, float* delays_arr,
 			unsigned int* pre_conns_arr, unsigned int* post_conns_arr, unsigned int* receptor_type_arr);
 
-	void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes, unsigned int* syn_num_spikes);
+	void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes,
+			unsigned int* syn_num_spikes, unsigned int spk_times_len);
 
 	int simulate();
 
@@ -30,6 +31,7 @@ namespace nnsim{
 
 	void get_conn_results(float* &x_res, float* &y_res, float* &u_res, unsigned int &N);
 
+	void get_spike_times(unsigned int* &spike_times, unsigned int* &num_spikes_on_neur);
 }
 
 #endif /* KERNEL_API_H_ */

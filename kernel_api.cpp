@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdio>
 #include <sstream>
+#include "kernel_api.h"
 
 namespace nnsim{
 
@@ -24,7 +25,6 @@ void init_network(float h, int NumNeur, int NumConns, float SimTime){
 	Ncon = NumConns;
 	Nneur = NumNeur;
 	Tsim = SimTime/time_step;
-	printf("success initializing network!\n");
 }
 
 void init_neurs(float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k_arr,
@@ -50,7 +50,6 @@ void init_neurs(float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k
 //	for (int i = 0; i < Nneur; i++){
 //		printf("%i: %g\n", i, as[i]);
 //	}
-	printf("Success initializing neurons!\n");
 }
 
 void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, float* U_arr,
@@ -68,33 +67,43 @@ void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, f
 	tau_recs = tau_rec_arr;
 	tau_facs = tau_fac_arr;
 
-	exp_pscs = new float[Nneur];
-	exp_recs = new float[Nneur];
-	exp_facs = new float[Nneur];
-	exp_taus = new float[Nneur];
-	delays = new unsigned int[Nneur];
+	delete[] exp_pscs;
+	delete[] exp_recs;
+	delete[] exp_facs;
+	delete[] exp_taus;
+	delete[] delays;
 
+	exp_pscs = new float[Ncon];
+	exp_recs = new float[Ncon];
+	exp_facs = new float[Ncon];
+	exp_taus = new float[Ncon];
+	delays = new unsigned int[Ncon];
+	
 	for (int c = 0; c < Ncon; c++){
-		exp_pscs[c] = expf(-time_step/tau_psc_arr[c]);
-		exp_recs[c] = expf(-time_step/tau_rec_arr[c]);
-		exp_facs[c] = expf(-time_step/tau_fac_arr[c]);
-		exp_taus[c] = (tau_psc_arr[c]*exp_pscs[c] - tau_rec_arr[c]*exp_recs[c])/(tau_rec_arr[c] - tau_psc_arr[c]);
-		delays[c] = delays_arr[c]/time_step;
-		printf("pre: %i post: %i delay in step: %i\n", pre_syns[c], post_syns[c], delays[c]);
+ 		xs[c] = weights[c]*xs[c];
+ 		exp_pscs[c] = expf(-time_step/tau_psc_arr[c]);
+ 		exp_recs[c] = expf(-time_step/tau_rec_arr[c]);
+ 		exp_facs[c] = expf(-time_step/tau_fac_arr[c]);
+ 		exp_taus[c] = (tau_psc_arr[c]*exp_pscs[c] - tau_rec_arr[c]*exp_recs[c])/(tau_rec_arr[c] - tau_psc_arr[c]);
+ 		delays[c] = delays_arr[c]/time_step;
+//		printf("pre: %i post: %i delay: %f\n", pre_syns[c], post_syns[c], delays_arr[c]);
 	}
-
-	printf("Synapses initialized successfully!\n");
 }
 
-void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes, unsigned int* syn_num_spikes){
+void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes,
+		unsigned int* syn_num_spikes, unsigned int spk_times_len){
+	delete[] spk_times;
+	delete[] neur_num_spks;
+	delete[] syn_num_spks;
 	spk_times = spike_times;
 	neur_num_spks = neur_num_spikes;
 	syn_num_spks = syn_num_spikes;
-	printf("Array for storing spikes initialized successfully!\n");
+	len_spk_tms = spk_times_len;
 }
 
 int simulate(){
 	float v1, u1, v2, u2, v3, u3, v4, u4;
+	float delta_x;
 	for (unsigned int t = 0; t < Tsim; t++){
 		for (int c = 0; c < Ncon; c++){
 			xs[c] = ys[c]*exp_taus[c] - (weights[c] - xs[c] - ys[c])*exp_recs[c] + weights[c];
@@ -104,16 +113,16 @@ int simulate(){
 			if (syn_num_spks[c] < neur_num_spks[pre_syns[c]]){
 				if (t >= delays[c] && spk_times[Nneur*syn_num_spks[c] + pre_syns[c]] == t - delays[c]){
 					us[c] += Us[c]*(1.0f - us[c]);
-					float dx = xs[c]*us[c];
-					ys[c] += dx;
-					xs[c] -= dx;
+					delta_x = xs[c]*us[c];
+					ys[c] += delta_x;
+					xs[c] -= delta_x;
 					syn_num_spks[c]++;
 				}
 			}
 			// When run parallel this incrementation should be atomic
-			if (receptor_type[pre_syns[c]] == AMPA_RECEPTOR){
+			if (receptor_type[c] == AMPA_RECEPTOR){
 				AMPA_Amuont[post_syns[c]] += ys[c];
-			} else if (receptor_type[pre_syns[c]] == GABBA_RECEPTOR){
+			} else if (receptor_type[c] == GABBA_RECEPTOR){
 				GABBA_Amuont[post_syns[c]] += ys[c];
 			}
 		}

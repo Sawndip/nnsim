@@ -42,7 +42,7 @@ namespace nnsim{
 	unsigned int* spk_times;
 	unsigned int* neur_num_spks;
 	unsigned int* syn_num_spks;
-
+	unsigned int len_spk_tms;
 
 	// Synaptic parameters and variables
 	float* ys;
