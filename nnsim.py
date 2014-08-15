@@ -9,7 +9,7 @@ import nnsim_pykernel
 import numpy as np
 np.random.seed(seed=0)
 
-MeanSpkPeriod = 25.
+MeanSpkPeriod = 20.
 
 exc_neur_param = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
                        'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -45., 'Um': 0., 
@@ -71,7 +71,7 @@ def create(N, n_type="exc", **kwargs):
         return fill_neurs(N, default_params=exc_neur_param, **kwargs)
     elif n_type == "inh":
         return fill_neurs(N, default_params=inh_neur_param, **kwargs)
-                
+
 def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     global syn_arr, NumConns
     pre = check_type(pre)
@@ -88,7 +88,11 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
         for i in pre:
             pre_ext.extend([i]*len(post))
             post_ext.extend(post)
-
+    elif type(conn_spec) == dict:
+        if conn_spec['rule'] == 'fixed_total_num':
+            for i in xrange(conn_spec['N']):
+                pre_ext.append(pre[np.random.randint(len(pre))])
+                post_ext.append(post[np.random.randint(len(post))])
     if (syn == "exc"):
         for key, value in exc_syn_param.items():
             syn_ext[key] = [value]*len(pre_ext)
@@ -165,8 +169,15 @@ def get_spk_times():
     for i in xrange(NumNodes):
         spikes.append([spk_times[NumNodes*sn + i]*tm_step for sn in xrange(n_spike[i])])
     return spikes
-    
-    
+
+def order_spikes(spikes):
+    times = []
+    senders = []
+    for i in xrange(NumNodes):
+        times.extend(spikes[i])
+        senders.extend([i]*len(spikes[i]))
+    return (times, senders)
+
 def simulate(h, SimTime):
     global tm_step
     tm_step = h
