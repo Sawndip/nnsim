@@ -105,27 +105,6 @@ int simulate(){
 	float v1, u1, v2, u2, v3, u3, v4, u4;
 	float delta_x;
 	for (unsigned int t = 0; t < Tsim; t++){
-		for (int c = 0; c < Ncon; c++){
-			xs[c] = ys[c]*exp_taus[c] - (weights[c] - xs[c] - ys[c])*exp_recs[c] + weights[c];
-			ys[c] = ys[c]*exp_pscs[c];
-			us[c] = us[c]*exp_facs[c];
-
-			if (syn_num_spks[c] < neur_num_spks[pre_syns[c]]){
-				if (t >= delays[c] && spk_times[Nneur*syn_num_spks[c] + pre_syns[c]] == t - delays[c]){
-					us[c] += Us[c]*(1.0f - us[c]);
-					delta_x = xs[c]*us[c];
-					ys[c] += delta_x;
-					xs[c] -= delta_x;
-					syn_num_spks[c]++;
-				}
-			}
-			// When run parallel this incrementation should be atomic
-			if (receptor_type[c] == AMPA_RECEPTOR){
-				AMPA_Amuont[post_syns[c]] += ys[c];
-			} else if (receptor_type[c] == GABBA_RECEPTOR){
-				GABBA_Amuont[post_syns[c]] += ys[c];
-			}
-		}
 
 		for (int n = 0; n < Nneur; n++){
 			float Isyn_new = -AMPA_Amuont[n]*(Vms[n] - Erev_exc[n]) - GABBA_Amuont[n]*(Vms[n] - Erev_inh[n]);
@@ -158,6 +137,29 @@ int simulate(){
 			AMPA_Amuont[n] = 0.0f;
 			GABBA_Amuont[n] = 0.0f;
 		}
+
+		for (int c = 0; c < Ncon; c++){
+			xs[c] = ys[c]*exp_taus[c] - (weights[c] - xs[c] - ys[c])*exp_recs[c] + weights[c];
+			ys[c] = ys[c]*exp_pscs[c];
+			us[c] = us[c]*exp_facs[c];
+
+			if (syn_num_spks[c] < neur_num_spks[pre_syns[c]]){
+				if (t >= delays[c] && spk_times[Nneur*syn_num_spks[c] + pre_syns[c]] == t - delays[c]){
+					us[c] += Us[c]*(1.0f - us[c]);
+					delta_x = xs[c]*us[c];
+					ys[c] += delta_x;
+					xs[c] -= delta_x;
+					syn_num_spks[c]++;
+				}
+			}
+			// When run parallel this incrementation should be atomic
+			if (receptor_type[c] == AMPA_RECEPTOR){
+				AMPA_Amuont[post_syns[c]] += ys[c];
+			} else if (receptor_type[c] == GABBA_RECEPTOR){
+				GABBA_Amuont[post_syns[c]] += ys[c];
+			}
+		}
+
 
 		for (unsigned int rec_neur = 0; rec_neur < recorded_neur_num; rec_neur++){
 			Vm_recorded[Tsim*rec_neur + t] = Vms[neurs_to_record[rec_neur]];

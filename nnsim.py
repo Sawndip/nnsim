@@ -9,6 +9,8 @@ import nnsim_pykernel
 import numpy as np
 np.random.seed(seed=0)
 
+MeanSpkPeriod = 25.
+
 exc_neur_param = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
                        'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -45., 'Um': 0., 
                        'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
@@ -47,28 +49,28 @@ def check_type(arg, ar_type=int):
         raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
     return [arg]
     
-def fill_neurs(N, params={}, default_params=None, **kwargs):
+def fill_neurs(N, default_params, **kwargs):
     global neur_arr, NumNodes
-    n_params = default_params.copy()
-                     
-    for key, value in params.items():
-        n_params[key] = value
 
     for key, value in kwargs.items():
-        if (len(kwargs[key]) == N):
-            neur_arr[key].extend(list(value))
-            n_params.pop(key)
+        if type(value) != dict:
+            neur_arr[key].extend([value]*N)
+        elif type(value) == dict:
+            std = value['std']
+            mean = value['mean']
+            neur_arr[key].extend(mean + std*np.random.randn(N))
+        default_params.pop(key)
         
-    for key, value in n_params.items():
+    for key, value in default_params.items():
             neur_arr[key].extend([value]*N)
     NumNodes += N
     return [i for i in xrange(NumNodes - N, NumNodes)]
 
-def create(N, n_type="exc", params={}, **kwargs):
+def create(N, n_type="exc", **kwargs):
     if n_type == "exc":
-        return fill_neurs(N, params=params, default_params=exc_neur_param, **kwargs)
+        return fill_neurs(N, default_params=exc_neur_param, **kwargs)
     elif n_type == "inh":
-        return fill_neurs(N, params=params, default_params=inh_neur_param, **kwargs)
+        return fill_neurs(N, default_params=inh_neur_param, **kwargs)
                 
 def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     global syn_arr, NumConns
@@ -107,7 +109,9 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
 
     syn_ext['pre'] = pre_ext
     syn_ext['post'] = post_ext
-    syn_arr = syn_ext
+    for key, value in syn_ext.items():
+        syn_arr[key].extend(value)
+
     NumConns += len(pre_ext)
     
     return [i for i in xrange(NumConns - len(pre_ext), NumConns)]
@@ -160,7 +164,6 @@ def get_spk_times():
     spikes = []
     for i in xrange(NumNodes):
         spikes.append([spk_times[NumNodes*sn + i]*tm_step for sn in xrange(n_spike[i])])
-    
     return spikes
     
     
@@ -173,9 +176,6 @@ def simulate(h, SimTime):
         args[key] = np.array(val, dtype='float32')
     nnsim_pykernel.init_neurs(**args)
     
-#    for key, val in neur_arr.items():
-#        del args[key]
-
     args = {}
     for key, val in syn_arr.items():
         args[key] = np.array(val, dtype='float32')
@@ -184,7 +184,7 @@ def simulate(h, SimTime):
     nnsim_pykernel.init_synapses(**args)
     
     args = {}
-    args['sps_times'] = np.zeros(NumNodes*SimTime/25., dtype='uint32')
+    args['sps_times'] = np.zeros(NumNodes*SimTime/MeanSpkPeriod, dtype='uint32')
     args['neur_num_spk'] = np.zeros(NumNodes, dtype='uint32')
     args['syn_num_spk'] = np.zeros(NumConns, dtype='uint32')
     nnsim_pykernel.init_spikes(**args)
