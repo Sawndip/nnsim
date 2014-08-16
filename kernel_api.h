@@ -32,6 +32,8 @@ namespace nnsim{
 	void get_conn_results(float* &x_res, float* &y_res, float* &u_res, unsigned int &N);
 
 	void get_spike_times(unsigned int* &spike_times, unsigned int* &num_spikes_on_neur);
+
+	void init_poisson(unsigned int* seeds, float* rates, float* weights, float psn_tau);
 }
 
 #endif /* KERNEL_API_H_ */

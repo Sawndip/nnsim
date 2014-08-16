@@ -39,6 +39,13 @@ namespace nnsim{
 	float* Erev_exc;
 	float* Erev_inh;
 
+	unsigned int* psn_times;
+	unsigned int* psn_seeds;
+	float* psn_rates;
+	float* y_psns;
+	float* exp_psns;
+	float* psn_weights;
+
 	unsigned int* spk_times;
 	unsigned int* neur_num_spks;
 	unsigned int* syn_num_spks;

@@ -17,8 +17,9 @@ static const char init_synapses_docstring[] = "init_synapses";
 static const char init_spikes_docstring[] = "init_spikes";
 static const char init_recorder_docstring[] = "init_recorder";
 static const char get_results_docstring[] = "get_results";
-static const char init_simulate_docstring[] = "simulate";
 static const char get_spk_times_docstring[] = "get_spk_times";
+static const char init_poisson_docstring[] = "init_poisson";
+static const char simulate_docstring[] = "simulate";
 
 static PyObject* init_network(PyObject *self, PyObject* args);
 
@@ -36,6 +37,8 @@ static PyObject* get_results(PyObject *self, PyObject* args);
 
 static PyObject* get_spk_times(PyObject* self, PyObject* args);
 
+static PyObject* init_poisson(PyObject* self, PyObject* args, PyObject* keywds);
+
 unsigned int NumNeur;
 unsigned int SpkTimesSz;
 
@@ -47,7 +50,8 @@ static PyMethodDef module_methods[] = {
 		{"init_recorder", init_recorder, METH_VARARGS, init_recorder_docstring},
 		{"get_results", get_results, METH_VARARGS, get_results_docstring},
 		{"get_spk_times", get_spk_times, METH_VARARGS, get_spk_times_docstring},
-		{"simulate", simulate, METH_VARARGS, init_simulate_docstring},
+		{"init_poisson", (PyCFunction) init_poisson, METH_VARARGS | METH_KEYWORDS, init_poisson_docstring},
+		{"simulate", simulate, METH_VARARGS, simulate_docstring},
 		{NULL, NULL, 0, NULL}
 	};
 
@@ -240,6 +244,37 @@ static PyObject* get_spk_times(PyObject* self, PyObject* args){
 
 	PyObject* result = Py_BuildValue("(OO)", spk_times_obj, n_spk_obj);
 	return result;
+}
+
+static PyObject* init_poisson(PyObject* self, PyObject* args, PyObject* keywds){
+	unsigned int* seeds;
+	float* rates;
+	float* weights;
+	float psn_tau;
+
+	PyObject* seeds_obj;
+	PyObject* rates_obj;
+	PyObject* psn_weights_obj;
+	PyObject* arg_npa;
+
+	static char *kwlist[] = {"psn_seed", "psn_rate", "psn_weight", "psn_tau", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOf", kwlist,
+			&seeds_obj, &rates_obj, &psn_weights_obj, &psn_tau)){
+		return NULL;
+	}
+	arg_npa = PyArray_FROM_OTF(seeds_obj, NPY_UINT32, NPY_IN_ARRAY);
+	seeds = (unsigned int*) PyArray_DATA(arg_npa);
+
+	arg_npa = PyArray_FROM_OTF(rates_obj, NPY_FLOAT32, NPY_IN_ARRAY);
+	rates = (float*) PyArray_DATA(arg_npa);
+
+	arg_npa = PyArray_FROM_OTF(psn_weights_obj, NPY_FLOAT32, NPY_IN_ARRAY);
+	weights = (float*) PyArray_DATA(arg_npa);
+
+	nnsim::init_poisson(seeds, rates, weights, psn_tau);
+
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 static PyObject* simulate(PyObject *self, PyObject* args){

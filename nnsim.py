@@ -11,13 +11,17 @@ np.random.seed(seed=0)
 
 MeanSpkPeriod = 20.
 
+psn_tau = 3.
+
 exc_neur_param = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
-                       'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -45., 'Um': 0., 
-                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
+                       'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -60., 'Um': 0., 
+                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
+                       'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
 inh_neur_param = {'a': 0.03, 'b': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
                        'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'Vm': -60., 'Um': 0., 
-                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.}
+                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
+                       'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
 exc_syn_param = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001, 
                       'U': 0.5, 'receptor_type': 1}
@@ -25,15 +29,16 @@ exc_syn_param = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001,
 inh_syn_param = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000., 
                       'U': 0.04, 'receptor_type': 2}
 
-syn_arr = {'tau_psc': [], 'tau_rec': [], 'tau_fac': [], 'U': [], 
-                    'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [], 
-                    'pre': [], 'post': [], 'receptor_type': []}
-
 syn_default = {'y': 0., 'x': 1., 'u': 0., 'weight': 1., 'delay': 0.}
 
 neur_arr = {'a': [], 'b': [], 'c': [], 'd': [], 'k': [], 'Cm': [], 
                        'Vr': [], 'Vt': [], 'Vpeak': [], 'Vm': [], 'Um': [], 
-                       'Erev_AMPA': [], 'Erev_GABBA': [], 'Isyn': [], 'Ie': []}
+                       'Erev_AMPA': [], 'Erev_GABBA': [], 'Isyn': [], 'Ie': [], 
+                       'psn_seed': [], 'psn_rate': [], 'psn_weight': []}
+
+syn_arr = {'tau_psc': [], 'tau_rec': [], 'tau_fac': [], 'U': [], 
+                    'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [], 
+                    'pre': [], 'post': [], 'receptor_type': []}
 
 NumNodes = 0
 
@@ -182,10 +187,24 @@ def simulate(h, SimTime):
     global tm_step
     tm_step = h
     nnsim_pykernel.init_network(h, NumNodes, NumConns, SimTime)
+    psn_keys = ['psn_seed', 'psn_rate', 'psn_weight']
+
     args = {}
     for key, val in neur_arr.items():
-        args[key] = np.array(val, dtype='float32')
+        if key not in psn_keys:
+            args[key] = np.array(val, dtype='float32')
     nnsim_pykernel.init_neurs(**args)
+
+    psn_args = {}
+    psn_args['psn_seed'] = np.array(np.random.randint(2147483647, size=NumNodes), dtype='uint32')
+    for i in xrange(NumNodes):
+        if neur_arr['psn_seed'][i] != None:
+            psn_args['psn_seed'][i] = neur_arr['psn_seed'][i]
+
+    psn_args['psn_rate'] = np.array(neur_arr['psn_rate'], dtype='float32')
+    psn_args['psn_weight'] = np.array(neur_arr['psn_weight'], dtype='float32')
+    psn_args['psn_tau'] = psn_tau
+    nnsim_pykernel.init_poisson(**psn_args)
     
     args = {}
     for key, val in syn_arr.items():

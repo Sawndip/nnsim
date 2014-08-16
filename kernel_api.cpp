@@ -20,6 +20,34 @@ float izhik_Um(float Vm, float Um, int m){
 	return time_step*as[m]*(bs[m]*(Vm - Vrs[m]) - Um);
 }
 
+float get_random(unsigned int *seed){
+	// return random number homogeneously distributed in interval [0:1]
+	unsigned long a = 16807;
+	unsigned long m = 2147483647;
+	unsigned long x = (unsigned long) *seed;
+	x = (a * x) % m;
+	*seed = (unsigned int) x;
+	return ((float)x)/m;
+}
+
+void init_poisson(unsigned int* seeds, float* rates, float* weights, float psn_tau){
+	psn_seeds = seeds;
+	psn_rates = rates;
+	psn_weights = weights;
+	psn_times = new unsigned int[Nneur];
+	y_psns = new float[Nneur]();
+	exp_psns = new float[Nneur];
+	for (int i = 0; i < Nneur; i++){
+		if (psn_rates[i] == 0.0f){
+			psn_rates[i] = 1.e-6;
+		}
+		exp_psns[i] = expf(-time_step/psn_tau);
+		psn_seeds[i] += 1000000;
+		psn_times[i] = -(1000.0f/(time_step*psn_rates[i]))*log(get_random(psn_seeds + i));
+	}
+}
+
+
 void init_network(float h, int NumNeur, int NumConns, float SimTime){
 	time_step = h;
 	Ncon = NumConns;
@@ -107,7 +135,14 @@ int simulate(){
 	for (unsigned int t = 0; t < Tsim; t++){
 
 		for (int n = 0; n < Nneur; n++){
-			float Isyn_new = -AMPA_Amuont[n]*(Vms[n] - Erev_exc[n]) - GABBA_Amuont[n]*(Vms[n] - Erev_inh[n]);
+			y_psns[n] *= exp_psns[n];
+			while (psn_times[n] == t){
+				y_psns[n] += psn_weights[n];
+				psn_times[n] -= (1000.0f/(time_step*psn_rates[n]))*log(get_random(psn_seeds + n));
+			}
+
+			// y_psns is here because poisson noise is excitatory
+			float Isyn_new = -(AMPA_Amuont[n] + y_psns[n])*(Vms[n] - Erev_exc[n]) - GABBA_Amuont[n]*(Vms[n] - Erev_inh[n]);
 			float Vm = Vms[n];
 			float Um = Ums[n];
 			if (Vm > Vpeaks[n]){
