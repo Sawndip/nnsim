@@ -58,12 +58,19 @@ def fill_neurs(N, default_params, **kwargs):
     global neur_arr, NumNodes
 
     for key, value in kwargs.items():
-        if type(value) != dict:
+        if type(value) not in [str, list, tuple, dict, np.ndarray]:
             neur_arr[key].extend([value]*N)
         elif type(value) == dict:
-            std = value['std']
-            mean = value['mean']
-            neur_arr[key].extend(mean + std*np.random.randn(N))
+            if value['distr'] == 'normal':
+                std = value['std']
+                mean = value['mean']
+                neur_arr[key].extend(mean + std*np.random.randn(N))
+            elif value['distr'] == 'uniform':
+                low = value['low']
+                high = value['high']
+                neur_arr[key].extend(np.random.uniform(low, high, size=N))
+        else:
+            raise RuntimeError("{0} must be a number or dict".format(key))
         default_params.pop(key)
         
     for key, value in default_params.items():
@@ -107,15 +114,21 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     
     for key, value in syn_default.items():
             syn_ext[key] = [value]*len(pre_ext)
-    
+
     for key, value in kwargs.items():
-        if type(value) != dict:
+        if type(value) not in [str, list, tuple, dict, np.ndarray]:
             syn_ext[key] = [value]*len(pre_ext)
         elif type(value) == dict:
-            std = value['std']
-            mean = value['mean']
-            syn_ext[key] = np.array(mean + std*np.random.randn(len(pre_ext)), dtype='float32')
-
+            if value['distr'] == 'normal':
+                std = value['std']
+                mean = value['mean']
+                syn_ext[key] = mean + std*np.random.randn(len(pre_ext))
+            elif value['distr'] == 'normal':
+                low = value['low']
+                high = value['high']
+                syn_ext[key] = np.random.uniform(low, high, size=len(pre_ext))
+        else:
+            raise RuntimeError("{0} must be a number or dict".format(key))
     syn_ext['pre'] = pre_ext
     syn_ext['post'] = post_ext
     for key, value in syn_ext.items():

@@ -12,7 +12,7 @@ import numpy as np
 h = .5
 SimTime = 1000.
 
-n_exc = create(1, n_type="exc", Ie=0., psn_rate=10., psn_seed=0)
+n_exc = create(1, n_type="exc", psn_rate=10., psn_seed=0)
 n_inh = create(1, n_type="inh", psn_rate=10., psn_seed=0)
 
 neur_rec = n_exc+n_inh
