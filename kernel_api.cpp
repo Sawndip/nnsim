@@ -109,6 +109,7 @@ void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, f
 	
 	for (int c = 0; c < Ncon; c++){
  		xs[c] = weights[c]*xs[c];
+ 		ys[c] = weights[c]*ys[c];
  		exp_pscs[c] = expf(-time_step/tau_psc_arr[c]);
  		exp_recs[c] = expf(-time_step/tau_rec_arr[c]);
  		exp_facs[c] = expf(-time_step/tau_fac_arr[c]);
@@ -172,7 +173,6 @@ int simulate(){
 			AMPA_Amuont[n] = 0.0f;
 			GABBA_Amuont[n] = 0.0f;
 		}
-
 		for (int c = 0; c < Ncon; c++){
 			xs[c] = ys[c]*exp_taus[c] - (weights[c] - xs[c] - ys[c])*exp_recs[c] + weights[c];
 			ys[c] = ys[c]*exp_pscs[c];
@@ -206,6 +206,29 @@ int simulate(){
 			x_recorded[Tsim*rec_con + t] = xs[conns_to_record[rec_con]];
 			y_recorded[Tsim*rec_con + t] = ys[conns_to_record[rec_con]];
 			u_recorded[Tsim*rec_con + t] = us[conns_to_record[rec_con]];
+		}
+
+		for(unsigned int pn = 0; pn < NumPopNeur; pn++){
+			for (unsigned int i = 0; i < PopNeurSizes[pn]; i++){
+				Vm_means[Tsim*pn + t] += Vms[PopNeurs[pn][i]];
+				Um_means[Tsim*pn + t] += Ums[PopNeurs[pn][i]];
+				Isyn_means[Tsim*pn + t] += Isyns[PopNeurs[pn][i]];
+//				printf("t: %f, Vm %i: %f\n", t*time_step, PopNeurs[pn][i], Vms[PopNeurs[pn][i]]);
+			}
+			Vm_means[Tsim*pn + t] /= PopNeurSizes[pn];
+			Um_means[Tsim*pn + t] /= PopNeurSizes[pn];
+			Isyn_means[Tsim*pn + t] /= PopNeurSizes[pn];
+		}
+
+		for(unsigned int pn = 0; pn < NumPopConn; pn++){
+			for (unsigned int i = 0; i < PopConnSizes[pn]; i++){
+				x_means[Tsim*pn + t] += xs[PopConns[pn][i]];
+				y_means[Tsim*pn + t] += ys[PopConns[pn][i]];
+				u_means[Tsim*pn + t] += us[PopConns[pn][i]];
+			}
+			x_means[Tsim*pn + t] /= PopConnSizes[pn];
+			y_means[Tsim*pn + t] /= PopConnSizes[pn];
+			u_means[Tsim*pn + t] /= PopConnSizes[pn];
 		}
 	}
 
@@ -266,9 +289,59 @@ void get_conn_results(float* &x_res, float* &y_res, float* &u_res, unsigned int 
 	N = recorded_con_num*Tsim;
 }
 
+void get_mean_neur_results(float* &Vm_res, float* &Um_res, float* &Isyn_res, unsigned int &N){
+	Vm_res = Vm_means;
+	Um_res = Um_means;
+	Isyn_res = Isyn_means;
+	N = NumPopNeur*Tsim;
+}
+
+void get_mean_conn_results(float* &x_res, float* &y_res, float* &u_res, unsigned int &N){
+	x_res = x_means;
+	y_res = y_means;
+	u_res = u_means;
+	N = NumPopConn*Tsim;
+}
+
 void get_spike_times(unsigned int* &spike_times, unsigned int* &num_spikes_on_neur){
 	spike_times = spk_times;
 	num_spikes_on_neur = neur_num_spks;
+}
+
+void init_mean_recorder(unsigned int num_pop_neur, unsigned int num_pop_conn){
+	NumPopNeur = num_pop_neur;
+	NumPopConn = num_pop_conn;
+	CurrentPopConn = 0;
+	CurrentPopNeur = 0;
+	PopNeurSizes  = new unsigned int[NumPopNeur];
+	PopConnSizes = new unsigned int[NumPopConn];
+	PopNeurs = new unsigned int*[NumPopNeur];
+	PopConns = new unsigned int*[NumPopConn];
+
+	Vm_means = new float[Tsim*NumPopNeur]();
+	Um_means = new float[Tsim*NumPopNeur]();
+	Isyn_means = new float[Tsim*NumPopNeur]();
+
+	x_means = new float[Tsim*NumPopConn]();
+	y_means = new float[Tsim*NumPopConn]();
+	u_means = new float[Tsim*NumPopConn]();
+}
+
+void add_neur_mean_record(unsigned int pop_size, unsigned int* pop_neurs){
+	PopNeurSizes[CurrentPopNeur] = pop_size;
+	PopNeurs[CurrentPopNeur] = pop_neurs;
+//	printf("Record from neurs: [");
+//	for (int i = 0; i < PopNeurSizes[CurrentPopNeur] - 1; i++){
+//		printf("%i,", PopNeurs[CurrentPopNeur][i]);
+//	}
+//	printf("%i]\n", PopNeurs[CurrentPopNeur][PopNeurSizes[CurrentPopNeur] -1]);
+	CurrentPopNeur ++;
+}
+
+void add_conn_mean_record(unsigned int pop_size, unsigned int* pop_conns){
+	PopConnSizes[CurrentPopConn] = pop_size;
+	PopConns[CurrentPopConn] = pop_conns;
+	CurrentPopConn ++;
 }
 
 }

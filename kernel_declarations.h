@@ -83,6 +83,23 @@ namespace nnsim{
 	float* x_recorded;
 	float* y_recorded;
 	float* u_recorded;
+
+	unsigned int NumPopNeur = 0; // number of populations (neurons)
+	unsigned int NumPopConn = 0; // number of populations (synapses)
+	unsigned int CurrentPopNeur = 0;
+	unsigned int CurrentPopConn = 0;
+	unsigned int* PopNeurSizes; 	// number of neuron in each population
+	unsigned int* PopConnSizes; 	// number of synapses in each population
+	unsigned int** PopNeurs;	     	// neuron indices of each population (size = max(PopNeurSizes)*NumPopNeur)
+	unsigned int** PopConns;	     	// connection indices of each population (size = max(PopConnSizes)*NumPopConn)
+
+	float* Vm_means;
+	float* Um_means;
+	float* Isyn_means;
+
+	float* x_means;
+	float* y_means;
+	float* u_means;
 }
 
 #endif /* KERNEL_DECLARATIONS_H_ */

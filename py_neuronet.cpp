@@ -11,6 +11,7 @@
 #include <cstdio>
 
 static const char module_docstring[] = "Python interface for NeuralNetworkSIMulator (NNSIM)";
+static const char simulate_docstring[] = "simulate";
 static const char init_network_docstring[] = "init_network";
 static const char init_neurs_docstring[] = "init_neurs";
 static const char init_synapses_docstring[] = "init_synapses";
@@ -19,7 +20,11 @@ static const char init_recorder_docstring[] = "init_recorder";
 static const char get_results_docstring[] = "get_results";
 static const char get_spk_times_docstring[] = "get_spk_times";
 static const char init_poisson_docstring[] = "init_poisson";
-static const char simulate_docstring[] = "simulate";
+static const char init_mean_recorder_docstring[] = "init_mean_recorder";
+static const char add_neur_mean_record_docstring[] = "add_neur_mean_record";
+static const char add_conn_mean_record_docstring[] = "add_conn_mean_record";
+
+static PyObject* simulate(PyObject *self, PyObject* args);
 
 static PyObject* init_network(PyObject *self, PyObject* args);
 
@@ -29,8 +34,6 @@ static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds)
 
 static PyObject* init_spikes(PyObject *self, PyObject* args, PyObject* keywds);
 
-static PyObject* simulate(PyObject *self, PyObject* args);
-
 static PyObject* init_recorder(PyObject *self, PyObject* args);
 
 static PyObject* get_results(PyObject *self, PyObject* args);
@@ -39,10 +42,17 @@ static PyObject* get_spk_times(PyObject* self, PyObject* args);
 
 static PyObject* init_poisson(PyObject* self, PyObject* args, PyObject* keywds);
 
+static PyObject* init_mean_recorder(PyObject* self, PyObject* args);
+
+static PyObject* add_neur_mean_record(PyObject* self, PyObject* args);
+
+static PyObject* add_conn_mean_record(PyObject* self, PyObject* args);
+
 unsigned int NumNeur;
 unsigned int SpkTimesSz;
 
 static PyMethodDef module_methods[] = {
+		{"simulate", simulate, METH_VARARGS, simulate_docstring},
 		{"init_network", init_network, METH_VARARGS, init_network_docstring},
 		{"init_neurs", (PyCFunction) init_neurs, METH_VARARGS | METH_KEYWORDS, init_neurs_docstring},
 		{"init_synapses", (PyCFunction) init_synapses, METH_VARARGS | METH_KEYWORDS, init_synapses_docstring},
@@ -51,7 +61,9 @@ static PyMethodDef module_methods[] = {
 		{"get_results", get_results, METH_VARARGS, get_results_docstring},
 		{"get_spk_times", get_spk_times, METH_VARARGS, get_spk_times_docstring},
 		{"init_poisson", (PyCFunction) init_poisson, METH_VARARGS | METH_KEYWORDS, init_poisson_docstring},
-		{"simulate", simulate, METH_VARARGS, simulate_docstring},
+		{"init_mean_recorder", init_mean_recorder, METH_VARARGS, init_mean_recorder_docstring},
+		{"add_neur_mean_record", add_neur_mean_record, METH_VARARGS, add_neur_mean_record_docstring},
+		{"add_conn_mean_record", add_conn_mean_record, METH_VARARGS, add_conn_mean_record_docstring},
 		{NULL, NULL, 0, NULL}
 	};
 
@@ -61,6 +73,12 @@ PyMODINIT_FUNC initnnsim_pykernel(){
 		return ;
 	}
 	import_array();
+}
+
+static PyObject* simulate(PyObject *self, PyObject* args){
+	nnsim::simulate();
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 static PyObject* init_network(PyObject *self, PyObject* args){
@@ -206,7 +224,16 @@ static PyObject* get_results(PyObject *self, PyObject* args){
 	float* Um_res;
 	float* Isyn_res;
 	unsigned int N;
-	nnsim::get_neur_results(Vm_res, Um_res, Isyn_res, N);
+
+	int meanFlg;
+	if (!PyArg_ParseTuple(args, "i", &meanFlg)){
+		return NULL;
+	}
+	if (meanFlg == 1){
+		nnsim::get_mean_neur_results(Vm_res, Um_res, Isyn_res, N);
+	} else{
+		nnsim::get_neur_results(Vm_res, Um_res, Isyn_res, N);
+	}
 
 	npy_intp res_dims[] = {N};
 	PyObject* Vm_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, Vm_res);
@@ -219,7 +246,11 @@ static PyObject* get_results(PyObject *self, PyObject* args){
 	float* x_res;
 	float* y_res;
 	float* u_res;
-	nnsim::get_conn_results(x_res, y_res, u_res, N);
+	if (meanFlg == 1){
+		nnsim::get_mean_conn_results(x_res, y_res, u_res, N);
+	} else{
+		nnsim::get_conn_results(x_res, y_res, u_res, N);
+	}
 	res_dims[0] = N;
 	PyObject* x_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, x_res);
 	PyObject* y_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, y_res);
@@ -277,8 +308,46 @@ static PyObject* init_poisson(PyObject* self, PyObject* args, PyObject* keywds){
 	return Py_None;
 }
 
-static PyObject* simulate(PyObject *self, PyObject* args){
-	nnsim::simulate();
+
+static PyObject* init_mean_recorder(PyObject* self, PyObject* args){
+	unsigned int num_pop_neur;
+	unsigned int num_pop_conn;
+	if (!PyArg_ParseTuple(args, "II", &num_pop_neur, &num_pop_conn)){
+		 return NULL;
+	}
+	nnsim::init_mean_recorder(num_pop_neur, num_pop_conn);
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject* add_neur_mean_record(PyObject* self, PyObject* args){
+	PyObject* neurs_obj;
+	unsigned int* neurs;
+	if (!PyArg_ParseTuple(args, "O", &neurs_obj)){
+		 return NULL;
+	}
+	neurs = (unsigned int*) PyArray_DATA(PyArray_FROM_OTF(neurs_obj, NPY_UINT32, NPY_IN_ARRAY));
+
+	npy_intp* p = PyArray_SHAPE((PyArrayObject*) neurs_obj);
+
+	nnsim::add_neur_mean_record(p[0], neurs);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+static PyObject* add_conn_mean_record(PyObject* self, PyObject* args){
+	PyObject* conns_obj;
+	unsigned int* conns;
+	if (!PyArg_ParseTuple(args, "O", &conns_obj)){
+		 return NULL;
+	}
+	conns = (unsigned int*) PyArray_DATA(PyArray_FROM_OTF(conns_obj, NPY_UINT32, NPY_IN_ARRAY));
+
+	npy_intp* p = PyArray_SHAPE((PyArrayObject*) conns_obj);
+
+	nnsim::add_conn_mean_record(p[0], conns);
+
 	Py_INCREF(Py_None);
 	return Py_None;
 }

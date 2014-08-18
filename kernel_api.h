@@ -31,9 +31,20 @@ namespace nnsim{
 
 	void get_conn_results(float* &x_res, float* &y_res, float* &u_res, unsigned int &N);
 
+	void get_mean_neur_results(float* &Vm_res, float* &Um_res, float* &Isyn_res, unsigned int &N);
+
+	void get_mean_conn_results(float* &x_res, float* &y_res, float* &u_res, unsigned int &N);
+
 	void get_spike_times(unsigned int* &spike_times, unsigned int* &num_spikes_on_neur);
 
 	void init_poisson(unsigned int* seeds, float* rates, float* weights, float psn_tau);
+
+	void init_mean_recorder(unsigned int num_pop_neur, unsigned int num_pop_conn);
+
+	void add_neur_mean_record(unsigned int pop_size, unsigned int* pop_neurs);
+
+	void add_conn_mean_record(unsigned int pop_size, unsigned int* pop_conns);
+
 }
 
 #endif /* KERNEL_API_H_ */

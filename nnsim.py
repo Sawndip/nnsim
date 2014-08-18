@@ -9,7 +9,7 @@ import nnsim_pykernel
 import numpy as np
 np.random.seed(seed=0)
 
-MeanSpkPeriod = 20.
+MeanSpkPeriod = 5.
 
 psn_tau = 3.
 
@@ -105,6 +105,7 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
             for i in xrange(conn_spec['N']):
                 pre_ext.append(pre[np.random.randint(len(pre))])
                 post_ext.append(post[np.random.randint(len(post))])
+    
     if (syn == "exc"):
         for key, value in exc_syn_param.items():
             syn_ext[key] = [value]*len(pre_ext)
@@ -123,7 +124,7 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
                 std = value['std']
                 mean = value['mean']
                 syn_ext[key] = mean + std*np.random.randn(len(pre_ext))
-            elif value['distr'] == 'normal':
+            elif value['distr'] == 'uniform':
                 low = value['low']
                 high = value['high']
                 syn_ext[key] = np.random.uniform(low, high, size=len(pre_ext))
@@ -143,8 +144,27 @@ def init_recorder(rec_from_n=[], rec_from_s=[]):
     rec_from_neur = check_type(rec_from_n)
     rec_from_syn = check_type(rec_from_s)
 
-def get_results():
-    (Vm_, Um_, Isyn_, x_, y_, u_) = nnsim_pykernel.get_results()
+pop_idx = {'neur': 0, 'syn': 0}
+pop_nodes = {'neur': [], 'syn': []}
+pop_names = {'neur': [], 'syn': []}
+
+def mean_rec(nodes, ntype='neur', name=None):
+    if name == None:
+        name = pop_idx[ntype]
+    pop_names[ntype].append(name)
+    pop_idx[ntype] += 1
+    pop_nodes[ntype].append(nodes)
+
+def get_results(mean=False):
+    if mean:
+        num_neur_rec = pop_idx['neur']
+        num_syn_rec = pop_idx['syn']
+        mean = 1
+    else:
+        num_neur_rec = len(rec_from_neur)
+        num_syn_rec = len(rec_from_syn)
+        mean = 0
+    (Vm_, Um_, Isyn_, x_, y_, u_) = nnsim_pykernel.get_results(mean)
     Vm = []
     Um = []
     Isyn = []
@@ -155,9 +175,9 @@ def get_results():
         return (Vm, Um, Isyn, x, y, u)
         
     start = 0
-    Tsim = len(Vm_)/len(rec_from_neur)
+    Tsim = len(Vm_)/num_neur_rec
     stop = Tsim
-    for i in range(len(rec_from_neur)):
+    for i in xrange(num_neur_rec):
         Vm.append(Vm_[start:stop])
         Um.append(Um_[start:stop])
         Isyn.append(Isyn_[start:stop])
@@ -168,9 +188,9 @@ def get_results():
         return (Vm, Um, Isyn, x, y, u)
 
     start = 0
-    Tsim = len(x_)/len(rec_from_syn)
+    Tsim = len(x_)/num_syn_rec
     stop = Tsim
-    for i in range(len(rec_from_syn)):
+    for i in xrange(num_syn_rec):
         x.append(x_[start:stop])
         y.append(y_[start:stop])
         u.append(u_[start:stop])
@@ -234,6 +254,13 @@ def simulate(h, SimTime):
     
     nnsim_pykernel.init_recorder(len(rec_from_neur), rec_from_neur, 
                                  len(rec_from_syn), rec_from_syn)
+
+    nnsim_pykernel.init_mean_recorder(pop_idx['neur'], pop_idx['syn'])
+    for i in pop_nodes['neur']:
+        nnsim_pykernel.add_neur_mean_record(np.array(i, dtype='uint32'))
+    
+    for i in pop_nodes['syn']:
+        nnsim_pykernel.add_conn_mean_record(np.array(i, dtype='uint32'))
 
     nnsim_pykernel.simulate()
 
