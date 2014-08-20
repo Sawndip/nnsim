@@ -80,9 +80,9 @@ def fill_neurs(N, default_params, **kwargs):
 
 def create(N, n_type="exc", **kwargs):
     if n_type == "exc":
-        return fill_neurs(N, default_params=exc_neur_param, **kwargs)
+        return fill_neurs(N, default_params=exc_neur_param.copy(), **kwargs)
     elif n_type == "inh":
-        return fill_neurs(N, default_params=inh_neur_param, **kwargs)
+        return fill_neurs(N, default_params=inh_neur_param.copy(), **kwargs)
 
 def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     global syn_arr, NumConns
