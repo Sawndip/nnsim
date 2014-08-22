@@ -15,13 +15,13 @@ psn_tau = 3.
 
 neur_param = {}
 
-neur_param['exc'] = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
-                       'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -60., 'Um': 0., 
+neur_param['exc'] = {'a': 0.02, 'b_1': 0.5, 'b_2': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
+                       'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
                        'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
-neur_param['inh'] = {'a': 0.03, 'b': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
-                       'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'Vm': -60., 'Um': 0., 
+neur_param['inh'] = {'a': 0.03, 'b_1': -2.0, 'b_2': 0.5, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
+                       'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
                        'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
@@ -35,8 +35,8 @@ syn_param['inh'] = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000.,
 
 syn_default = {'y': 0., 'x': 1., 'u': 0., 'weight': 1., 'delay': 0.}
 
-neur_arr = {'a': [], 'b': [], 'c': [], 'd': [], 'k': [], 'Cm': [], 
-                       'Vr': [], 'Vt': [], 'Vpeak': [], 'Vm': [], 'Um': [], 
+neur_arr = {'a': [], 'b_1': [], 'b_2': [], 'c': [], 'd': [], 'k': [], 'Cm': [], 
+                       'Vr': [], 'Vt': [], 'Vpeak': [], 'p_1': [], 'p_2': [], 'Vm': [], 'Um': [], 
                        'Erev_AMPA': [], 'Erev_GABBA': [], 'Isyn': [], 'Ie': [], 
                        'psn_seed': [], 'psn_rate': [], 'psn_weight': []}
 

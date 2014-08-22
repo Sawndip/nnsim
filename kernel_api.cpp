@@ -17,7 +17,11 @@ float izhik_Vm(float Vm, float Um, float Isyn, int m){
 }
 
 float izhik_Um(float Vm, float Um, int m){
-	return time_step*as[m]*(bs[m]*(Vm - Vrs[m]) - Um);
+	if (Vm < Vrs[m]){
+		return time_step*as[m]*(b1_s[m]*powf((Vm - Vrs[m]), p1_s[m]) - Um);
+	} else {
+		return time_step*as[m]*(b2_s[m]*powf((Vm - Vrs[m]), p2_s[m]) - Um);
+	}
 }
 
 float get_random(unsigned int *seed){
@@ -55,20 +59,23 @@ void init_network(float h, int NumNeur, int NumConns, float SimTime){
 	Tsim = SimTime/time_step;
 }
 
-void init_neurs(float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k_arr,
+void init_neurs(float* a_arr, float* b1_arr, float* b2_arr, float* c_arr, float* d_arr, float* k_arr,
 		float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* Ie_arr, float* Isyn_arr,
-		float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr){
+		float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr, float* p1_arr, float* p2_arr){
 	Vms = Vm_arr;
 	Ums = Um_arr;
 	Ies = Ie_arr;
 	as = a_arr;
-	bs = b_arr;
+	b1_s = b1_arr;
+	b2_s = b2_arr;
 	cs = c_arr;
 	ds = d_arr;
 	ks = k_arr;
 	Cms = Cm_arr;
 	Vrs = Vr_arr;
 	Vts = Vt_arr;
+	p1_s = p1_arr;
+	p2_s = p2_arr;
 	Vpeaks = Vpeak_arr;
 	Isyns = Isyn_arr;
 	Erev_exc = Erev_exc_arr;
@@ -76,7 +83,7 @@ void init_neurs(float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k
 	AMPA_Amuont = new float[Nneur]();
 	GABBA_Amuont = new float[Nneur]();
 //	for (int i = 0; i < Nneur; i++){
-//		printf("%i: %g\n", i, as[i]);
+//		printf("%i: %g %g\n", i, p1_s[i], p2_s[i]);
 //	}
 }
 

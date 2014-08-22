@@ -25,7 +25,8 @@ namespace nnsim{
 	float* Ums;
 	float* Ies;
 	float* as;
-	float* bs;
+	float* b1_s;
+	float* b2_s;
 	float* cs;
 	float* ds;
 	float* ks;
@@ -33,6 +34,8 @@ namespace nnsim{
 	float* Vrs;
 	float* Vts;
 	float* Vpeaks;
+	float* p1_s;
+	float* p2_s;
 	float* Isyns;
 	float* AMPA_Amuont;
 	float* GABBA_Amuont;

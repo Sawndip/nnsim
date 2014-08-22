@@ -94,16 +94,17 @@ static PyObject* init_network(PyObject *self, PyObject* args){
 }
 
 static PyObject* init_neurs(PyObject *self, PyObject* args, PyObject* keywds){
-	int Nparam = 15;
+	int Nparam = 18;
 	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	 static char * kwlist[] = {"a", "b", "c", "d", "k", "Cm", "Erev_AMPA", "Erev_GABBA",
-			 "Ie", "Isyn", "Um", "Vm", "Vpeak", "Vr", "Vt", NULL};
+	 static char * kwlist[] = {"a", "b_1", "b_2", "c", "d", "k", "Cm", "Erev_AMPA", "Erev_GABBA",
+			 "Ie", "Isyn", "Um", "Vm", "Vpeak", "Vr", "Vt", "p_1", "p_2", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOOOOOO", kwlist,
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOOOOOOOOO", kwlist,
 			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
 			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6], &args_pyobj_arr[7],
 			&args_pyobj_arr[8], &args_pyobj_arr[9], &args_pyobj_arr[10], &args_pyobj_arr[11],
-			&args_pyobj_arr[12], &args_pyobj_arr[13], &args_pyobj_arr[14])){
+			&args_pyobj_arr[12], &args_pyobj_arr[13], &args_pyobj_arr[14], &args_pyobj_arr[15],
+			&args_pyobj_arr[16], &args_pyobj_arr[17])){
 		return NULL;
 	}
 	float** args_arr = new float*[Nparam];
@@ -121,7 +122,8 @@ static PyObject* init_neurs(PyObject *self, PyObject* args, PyObject* keywds){
 	nnsim::init_neurs(args_arr[0], args_arr[1], args_arr[2], args_arr[3],
 			args_arr[4], args_arr[5], args_arr[6], args_arr[7],
 			args_arr[8], args_arr[9], args_arr[10], args_arr[11],
-			args_arr[12], args_arr[13], args_arr[14]);
+			args_arr[12], args_arr[13], args_arr[14], args_arr[15],
+			args_arr[16], args_arr[17]);
 
 	Py_INCREF(Py_None);
 	return Py_None;

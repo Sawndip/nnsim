@@ -12,9 +12,9 @@ namespace nnsim{
 
 	void init_network(float h, int NumNeur, int NumConns, float SimTime);
 
-	void init_neurs(float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* Ie_arr, float* Isyn_arr,
-			float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr,
-			float* a_arr, float* b_arr, float* c_arr, float* d_arr, float* k_arr);
+	void init_neurs(float* a_arr, float* b1_arr, float* b2_arr, float* c_arr, float* d_arr, float* k_arr,
+			float* Cm_arr, float* Erev_exc_arr, float* Erev_inh_arr, float* Ie_arr, float* Isyn_arr,
+			float* Um_arr, float* Vm_arr, float* Vpeak_arr, float* Vr_arr, float* Vt_arr, float* p1_arr, float* p2_arr);
 
 	void init_synapses(float* tau_rec_arr, float* tau_psc_arr, float* tau_fac_arr, float* U_arr,
 			float* x_arr, float* y_arr, float* u_arr, float* weights_arr, float* delays_arr,
