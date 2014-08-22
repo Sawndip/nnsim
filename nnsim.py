@@ -13,20 +13,24 @@ MeanSpkPeriod = 5.
 
 psn_tau = 3.
 
-exc_neur_param = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
+neur_param = {}
+
+neur_param['exc'] = {'a': 0.02, 'b': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
                        'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'Vm': -60., 'Um': 0., 
                        'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
-inh_neur_param = {'a': 0.03, 'b': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
+neur_param['inh'] = {'a': 0.03, 'b': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
                        'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'Vm': -60., 'Um': 0., 
                        'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
-exc_syn_param = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001, 
+syn_param = {}
+
+syn_param['exc'] = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001, 
                       'U': 0.5, 'receptor_type': 1}
 
-inh_syn_param = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000., 
+syn_param['inh'] = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000., 
                       'U': 0.04, 'receptor_type': 2}
 
 syn_default = {'y': 0., 'x': 1., 'u': 0., 'weight': 1., 'delay': 0.}
@@ -54,8 +58,9 @@ def check_type(arg, ar_type=int):
         raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
     return [arg]
     
-def fill_neurs(N, default_params, **kwargs):
+def create(N, n_type="exc", **kwargs):
     global neur_arr, NumNodes
+    default_params=neur_param[n_type].copy()
 
     for key, value in kwargs.items():
         if type(value) not in [str, list, tuple, dict, np.ndarray]:
@@ -77,13 +82,7 @@ def fill_neurs(N, default_params, **kwargs):
             neur_arr[key].extend([value]*N)
     NumNodes += N
     return [i for i in xrange(NumNodes - N, NumNodes)]
-
-def create(N, n_type="exc", **kwargs):
-    if n_type == "exc":
-        return fill_neurs(N, default_params=exc_neur_param.copy(), **kwargs)
-    elif n_type == "inh":
-        return fill_neurs(N, default_params=inh_neur_param.copy(), **kwargs)
-
+    
 def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     global syn_arr, NumConns
     pre = check_type(pre)
@@ -93,7 +92,7 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     syn_ext ={}
     if(conn_spec == 'one_to_one'):
         if (len(pre) != len(post)):
-                raise RuntimeError("Lengths of pre and post must be equal")
+            raise RuntimeError("Lengths of pre and post must be equal")
         pre_ext = pre
         post_ext = post
     elif (conn_spec == 'all_to_all'):
@@ -105,16 +104,11 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
             for i in xrange(conn_spec['N']):
                 pre_ext.append(pre[np.random.randint(len(pre))])
                 post_ext.append(post[np.random.randint(len(post))])
-    
-    if (syn == "exc"):
-        for key, value in exc_syn_param.items():
-            syn_ext[key] = [value]*len(pre_ext)
-    elif (syn == "inh"):
-        for key, value in inh_syn_param.items():
-            syn_ext[key] = [value]*len(pre_ext)
-    
-    for key, value in syn_default.items():
-            syn_ext[key] = [value]*len(pre_ext)
+    else:
+        raise RuntimeError("conn_spec must be one_to_one or all_to_all or dict")
+
+    for key, value in syn_param[syn].items() + syn_default.items():
+        syn_ext[key] = [value]*len(pre_ext)
 
     for key, value in kwargs.items():
         if type(value) not in [str, list, tuple, dict, np.ndarray]:
@@ -136,7 +130,6 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
         syn_arr[key].extend(value)
 
     NumConns += len(pre_ext)
-    
     return [i for i in xrange(NumConns - len(pre_ext), NumConns)]
 
 def init_recorder(rec_from_n=[], rec_from_s=[]):
@@ -263,6 +256,5 @@ def simulate(h, SimTime):
         nnsim_pykernel.add_conn_mean_record(np.array(i, dtype='uint32'))
 
     nnsim_pykernel.simulate()
-
 
 print "  --NNSIM--  "
