@@ -153,29 +153,30 @@ int simulate(){
 			float Isyn_new = -(AMPA_Amuont[n] + y_psns[n])*(Vms[n] - Erev_exc[n]) - GABBA_Amuont[n]*(Vms[n] - Erev_inh[n]);
 			float Vm = Vms[n];
 			float Um = Ums[n];
+			v1 = izhik_Vm(Vm, Um, Isyns[n], n);
+			u1 = izhik_Um(Vm, Um, n);
+			Vms[n] = Vm + v1*0.5f;
+			Ums[n] = Um + u1*0.5f;
+			v2 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
+			u2 = izhik_Um(Vms[n], Ums[n], n);
+			Vms[n] = Vm + v2*0.5f;
+			Ums[n] = Um + u2*0.5f;
+			v3 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
+			u3 = izhik_Um(Vms[n], Ums[n], n);
+			Vms[n] = Vm + v3;
+			Ums[n] = Um + u3;
+			v4 = izhik_Vm(Vms[n], Ums[n], Isyns[n], n);
+			u4 = izhik_Um(Vms[n], Ums[n], n);
+			Vms[n] = Vm + (v1 + 2.0f*(v2 + v3) + v4)*0.16666666f;
+			Ums[n] = Um + (u1 + 2.0f*(u2 + u3) + u4)*0.16666666f;
+			
 			if (Vm > Vpeaks[n]){
 				spk_times[Nneur*neur_num_spks[n] + n] = t;
 				neur_num_spks[n]++;
 				Vms[n] = cs[n];
 				Ums[n] = Um + ds[n];
-			}else{
-				v1 = izhik_Vm(Vm, Um, Isyns[n], n);
-				u1 = izhik_Um(Vm, Um, n);
-				Vms[n] = Vm + v1*0.5f;
-				Ums[n] = Um + u1*0.5f;
-				v2 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
-				u2 = izhik_Um(Vms[n], Ums[n], n);
-				Vms[n] = Vm + v2*0.5f;
-				Ums[n] = Um + u2*0.5f;
-				v3 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
-				u3 = izhik_Um(Vms[n], Ums[n], n);
-				Vms[n] = Vm + v3;
-				Ums[n] = Um + u3;
-				v4 = izhik_Vm(Vms[n], Ums[n], Isyns[n], n);
-				u4 = izhik_Um(Vms[n], Ums[n], n);
-				Vms[n] = Vm + (v1 + 2.0f*(v2 + v3) + v4)*0.16666666f;
-				Ums[n] = Um + (u1 + 2.0f*(u2 + u3) + u4)*0.16666666f;
 			}
+			
 			Isyns[n] = Isyn_new;
 			AMPA_Amuont[n] = 0.0f;
 			GABBA_Amuont[n] = 0.0f;
