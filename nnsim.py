@@ -15,12 +15,12 @@ psn_tau = 3.
 
 neur_param = {}
 
-neur_param['exc'] = {'a': 0.02, 'b_1': 0.5, 'b_2': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50., 
+neur_param['exc'] = {'a': 0.02, 'b_1': 0.5, 'b_2': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50.,
                        'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
                        'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
-neur_param['inh'] = {'a': 0.03, 'b_1': -2.0, 'b_2': 0.5, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100., 
+neur_param['inh'] = {'a': 0.03, 'b_1': -2.0, 'b_2': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100.,
                        'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
                        'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
@@ -54,6 +54,9 @@ def check_type(arg, ar_type=int):
             if type(i) != ar_type:
                 raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
         return arg
+    elif type(arg) == np.ndarray:
+        if arg.dtype == np.int:
+            return arg
     elif type(arg) != ar_type:
         raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
     return [arg]
@@ -69,11 +72,19 @@ def create(N, n_type="exc", **kwargs):
             if value['distr'] == 'normal':
                 std = value['std']
                 mean = value['mean']
-                neur_arr[key].extend(mean + std*np.random.randn(N))
+                if value.get('abs') == True:
+                    neur_arr[key].extend(np.abs(mean + std*np.random.randn(N)))
+                else:
+                    neur_arr[key].extend(mean + std*np.random.randn(N))
             elif value['distr'] == 'uniform':
                 low = value['low']
                 high = value['high']
                 neur_arr[key].extend(np.random.uniform(low, high, size=N))
+            elif value['distr'] == 'gamma':
+                shape = value['shape']
+                scale = value['scale']
+                loc = value['loc']
+                neur_arr[key].extend(loc + np.random.gamma(shape, scale, size=N))
         else:
             raise RuntimeError("{0} must be a number or dict".format(key))
         default_params.pop(key)
@@ -104,6 +115,16 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
             for i in xrange(conn_spec['N']):
                 pre_ext.append(pre[np.random.randint(len(pre))])
                 post_ext.append(post[np.random.randint(len(post))])
+        if conn_spec['rule'] == 'fixed_outdegree':
+            for i in pre:
+                n_post = conn_spec['N']
+                pre_ext.extend([i]*n_post)
+                post_ext.extend(np.random.permutation(post)[:n_post])
+        if conn_spec['rule'] == 'mean_outdegree':
+            for i in pre:
+                n_post = np.abs(conn_spec['N_mean'] + conn_spec['N_std']*np.random.randn())
+                pre_ext.extend([i]*n_post)
+                post_ext.extend(np.random.permutation(post)[:n_post])
     else:
         raise RuntimeError("conn_spec must be one_to_one or all_to_all or dict")
 
@@ -117,11 +138,19 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
             if value['distr'] == 'normal':
                 std = value['std']
                 mean = value['mean']
-                syn_ext[key] = mean + std*np.random.randn(len(pre_ext))
+                if value.get('abs') == True:
+                    syn_ext[key] = np.abs(mean + std*np.random.randn(len(pre_ext)))
+                else:
+                    syn_ext[key] = mean + std*np.random.randn(len(pre_ext))
             elif value['distr'] == 'uniform':
                 low = value['low']
                 high = value['high']
                 syn_ext[key] = np.random.uniform(low, high, size=len(pre_ext))
+            elif value['distr'] == 'gamma':
+                shape = value['shape']
+                scale = value['scale']
+                loc = value['loc']
+                syn_ext[key] = loc + np.random.gamma(shape, scale, size=N)
         else:
             raise RuntimeError("{0} must be a number or dict".format(key))
     syn_ext['pre'] = pre_ext

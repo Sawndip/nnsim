@@ -11,24 +11,41 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 h = .5
-SimTime = 4000.
+SimTime = 2000.
 bin_sz = 5.
+NumExc = 400
+NumInh = 100
+p_con = 0.5
 
-n_exc = create(400, n_type="exc", 
-               Ie={'distr': 'normal', 'mean': 0., 'std': 0.},
-               psn_rate=50.)
+n_exc = create(350, n_type="exc", d={'distr': 'normal', 'mean': 70., 'std': 25.},
+#               Ie={'distr': 'normal', 'mean': 10., 'std': 5., 'abs': True},
+               psn_rate=140.
+               )
+
+n_pmkr = create(50, n_type='exc', 
+                Ie={'distr': 'normal', 'mean': 35., 'std': 10.}, 
+                psn_rate=0.
+                )
+
+n_exc = n_pmkr + n_exc
 
 n_inh = create(100, n_type="inh")
 
-con = connect(n_exc, n_inh+n_exc, conn_spec={'rule': 'fixed_total_num', 'N': 20000}, 
-              delay={'distr': 'uniform', 'low': 0., 'high': 40.},
-              x={'distr': 'uniform', 'low': 0., 'high': .5},
-              weight={'distr': 'uniform', 'low': 5., 'high': 7.})
+N_exc_con = int(round(np.sqrt(p_con) * NumExc))
+N_inh_con = int(round(np.sqrt(p_con) * NumInh))
 
-con2 = connect(n_inh, n_inh+n_exc, syn="inh", conn_spec={'rule': 'fixed_total_num', 'N': 5000}, 
-              delay={'distr': 'uniform', 'low': 0., 'high': 40.},
+pre = np.random.permutation(n_exc)[:N_exc_con]
+con = connect(pre, n_inh+n_exc, conn_spec={'rule': 'fixed_outdegree', 'N': N_exc_con},
+              delay={'distr': 'uniform', 'low': 0., 'high': 10.},
+              tau_psc=19., tau_rec=800.,
               x={'distr': 'uniform', 'low': 0., 'high': .5},
-              weight={'distr': 'uniform', 'low': 5., 'high': 7.})
+              weight={'distr': 'normal', 'mean': 5., 'std': 5., 'abs': True})
+
+pre = np.random.permutation(n_inh)[:N_inh_con]
+con2 = connect(pre, n_inh+n_exc, syn="inh", conn_spec={'rule': 'fixed_outdegree', 'N': N_inh_con},
+              delay={'distr': 'uniform', 'low': 0., 'high': 10.},
+              x={'distr': 'uniform', 'low': 0., 'high': .5},
+              weight={'distr': 'normal', 'mean': 6., 'std': 2., 'abs': True})
 
 init_recorder()
 
@@ -67,4 +84,5 @@ for i in range(nnsim.pop_idx[name]):
     ax[i].set_ylabel(nnsim.pop_names[name][i])
 
 pl.xlabel("Time, ms")
+
 pl.show()
