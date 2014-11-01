@@ -6,7 +6,7 @@ Created on Tue Aug 12 18:14:26 2014
 """
 
 from nnsim import connect, create, get_results, init_recorder, simulate, get_spk_times, order_spikes, mean_rec
-import nnsim 
+import nnsim
 import matplotlib.pyplot as pl
 import numpy as np
 
@@ -23,7 +23,7 @@ n_exc = create(350, n_type="exc", d={'distr': 'normal', 'mean': 70., 'std': 25.}
                )
 
 n_pmkr = create(50, n_type='exc', 
-                Ie={'distr': 'normal', 'mean': 35., 'std': 10.}, 
+                Ie={'distr': 'normal', 'mean': 35., 'std': 10.},
                 psn_rate=0.
                 )
 
@@ -37,7 +37,7 @@ N_inh_con = int(round(np.sqrt(p_con) * NumInh))
 pre = np.random.permutation(n_exc)[:N_exc_con]
 con = connect(pre, n_inh+n_exc, conn_spec={'rule': 'fixed_outdegree', 'N': N_exc_con},
               delay={'distr': 'uniform', 'low': 0., 'high': 10.},
-              tau_psc=19., tau_rec=800.,
+              tau_rec=800.,
               x={'distr': 'uniform', 'low': 0., 'high': .5},
               weight={'distr': 'normal', 'mean': 5., 'std': 5., 'abs': True})
 
@@ -58,7 +58,7 @@ mean_rec(con2, 'syn', 'syn_inh')
 import time
 start = time.time()
 simulate(h, SimTime)
-print "Elapsed % s", time.time() - start
+print "Elapsed %f s" % (time.time() - start)
 
 spikes = get_spk_times()
 (times, senders) = order_spikes(spikes)
@@ -72,7 +72,7 @@ ax2.plot(ahis[1][:-1], ahis[0])
 ax2.set_ylabel("num spike in {0} ms".format(bin_sz))
 ax2.set_xlabel("Time, ms")
 
-(Vm, Um, Isyn, x, y, u) = get_results(True)
+(Vm, Um, Isyn, y_exc, y_inh, x, u) = get_results(True)
 t = np.linspace(0, SimTime, len(Vm[0]))
 name = 'syn'
 #name = 'neur'

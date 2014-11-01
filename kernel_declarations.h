@@ -13,7 +13,7 @@
 namespace nnsim{
 
 	unsigned int AMPA_RECEPTOR = 1;
-	unsigned int GABBA_RECEPTOR = 2;
+	unsigned int GABA_RECEPTOR = 2;
 	// step size in ms
 	float time_step;
 	int Ncon;
@@ -38,7 +38,7 @@ namespace nnsim{
 	float* p2_s;
 	float* Isyns;
 	float* AMPA_Amuont;
-	float* GABBA_Amuont;
+	float* GABA_Amuont;
 	float* Erev_exc;
 	float* Erev_inh;
 
@@ -53,20 +53,16 @@ namespace nnsim{
 	unsigned int* neur_num_spks;
 	unsigned int* syn_num_spks;
 	unsigned int len_spk_tms;
+	float* exp_pscs_exc;
+	float* exp_pscs_inh;
 
 	// Synaptic parameters and variables
-	float* ys;
 	float* xs;
 	float* us;
-	float* Us;
-	float* tau_pscs;
-	float* tau_recs;
-	float* tau_facs;
 
-	float* exp_pscs;
+	float* Us;
 	float* exp_recs;
 	float* exp_facs;
-	float* exp_taus;
 
 	float* weights;
 	unsigned int* delays;
@@ -80,11 +76,12 @@ namespace nnsim{
 	float* Vm_recorded;
 	float* Um_recorded;
 	float* Isyn_recorded;
+	float* y_exc_recorded;
+	float* y_inh_recorded;
 
 	unsigned int recorded_con_num = 0;
 	unsigned int* conns_to_record;
 	float* x_recorded;
-	float* y_recorded;
 	float* u_recorded;
 
 	unsigned int NumPopNeur = 0; // number of populations (neurons)
@@ -99,9 +96,10 @@ namespace nnsim{
 	float* Vm_means;
 	float* Um_means;
 	float* Isyn_means;
+	float* y_exc_means;
+	float* y_inh_means;
 
 	float* x_means;
-	float* y_means;
 	float* u_means;
 }
 

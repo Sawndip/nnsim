@@ -94,17 +94,17 @@ static PyObject* init_network(PyObject *self, PyObject* args){
 }
 
 static PyObject* init_neurs(PyObject *self, PyObject* args, PyObject* keywds){
-	int Nparam = 18;
+	int Nparam = 20;
 	PyObject** args_pyobj_arr = new PyObject*[Nparam];
-	 static char * kwlist[] = {"a", "b_1", "b_2", "c", "d", "k", "Cm", "Erev_AMPA", "Erev_GABBA",
-			 "Ie", "Isyn", "Um", "Vm", "Vpeak", "Vr", "Vt", "p_1", "p_2", NULL};
+	 static char * kwlist[] = {"a", "b_1", "b_2", "c", "d", "k", "Cm", "Erev_AMPA", "Erev_GABA",
+			 "Ie", "Isyn", "tau_psc_exc", "tau_psc_inh", "Um", "Vm", "Vpeak", "Vr", "Vt", "p_1", "p_2", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOOOOOOOOO", kwlist,
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOOOOOOOOOOO", kwlist,
 			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
 			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6], &args_pyobj_arr[7],
 			&args_pyobj_arr[8], &args_pyobj_arr[9], &args_pyobj_arr[10], &args_pyobj_arr[11],
 			&args_pyobj_arr[12], &args_pyobj_arr[13], &args_pyobj_arr[14], &args_pyobj_arr[15],
-			&args_pyobj_arr[16], &args_pyobj_arr[17])){
+			&args_pyobj_arr[16], &args_pyobj_arr[17], &args_pyobj_arr[18], &args_pyobj_arr[19])){
 		return NULL;
 	}
 	float** args_arr = new float*[Nparam];
@@ -123,23 +123,23 @@ static PyObject* init_neurs(PyObject *self, PyObject* args, PyObject* keywds){
 			args_arr[4], args_arr[5], args_arr[6], args_arr[7],
 			args_arr[8], args_arr[9], args_arr[10], args_arr[11],
 			args_arr[12], args_arr[13], args_arr[14], args_arr[15],
-			args_arr[16], args_arr[17]);
+			args_arr[16], args_arr[17], args_arr[18], args_arr[19]);
 
 	Py_INCREF(Py_None);
 	return Py_None;
 }
 
 static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds){
-	int Nparam = 9;
+	int Nparam = 8;
 	int Nparam_int = 3;
 	PyObject** args_pyobj_arr = new PyObject*[Nparam + Nparam_int];
 
-	static char *kwlist[] = {"tau_rec", "tau_psc", "tau_fac", "U", "x", "y", "u",
+	static char *kwlist[] = {"tau_rec", "tau_fac", "U", "x", "y", "u",
 							"weight", "delay", "pre", "post", "receptor_type", NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOOO", kwlist,
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOOOOOOOOO", kwlist,
 			&args_pyobj_arr[0], &args_pyobj_arr[1], &args_pyobj_arr[2], &args_pyobj_arr[3],
 			&args_pyobj_arr[4], &args_pyobj_arr[5], &args_pyobj_arr[6], &args_pyobj_arr[7],
-			&args_pyobj_arr[8], &args_pyobj_arr[9], &args_pyobj_arr[10], &args_pyobj_arr[11])){
+			&args_pyobj_arr[8], &args_pyobj_arr[9], &args_pyobj_arr[10])){
 		return NULL;
 	}
 
@@ -168,7 +168,7 @@ static PyObject* init_synapses(PyObject *self, PyObject* args, PyObject* keywds)
 	}
 	nnsim::init_synapses(args_arr[0], args_arr[1], args_arr[2], args_arr[3],
 			args_arr[4], args_arr[5], args_arr[6], args_arr[7],
-			args_arr[8], args_arr_int[0], args_arr_int[1], args_arr_int[2]);
+			args_arr_int[0], args_arr_int[1], args_arr_int[2]);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -225,6 +225,8 @@ static PyObject* get_results(PyObject *self, PyObject* args){
 	float* Vm_res;
 	float* Um_res;
 	float* Isyn_res;
+	float* y_exc_res;
+	float* y_inh_res;
 	unsigned int N;
 
 	int meanFlg;
@@ -232,36 +234,37 @@ static PyObject* get_results(PyObject *self, PyObject* args){
 		return NULL;
 	}
 	if (meanFlg == 1){
-		nnsim::get_mean_neur_results(Vm_res, Um_res, Isyn_res, N);
+		nnsim::get_mean_neur_results(Vm_res, Um_res, Isyn_res, y_exc_res, y_inh_res, N);
 	} else{
-		nnsim::get_neur_results(Vm_res, Um_res, Isyn_res, N);
+		nnsim::get_neur_results(Vm_res, Um_res, Isyn_res, y_exc_res, y_inh_res, N);
 	}
 
 	npy_intp res_dims[] = {N};
 	PyObject* Vm_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, Vm_res);
 	PyObject* Um_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, Um_res);
 	PyObject* Isyn_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, Isyn_res);
+	PyObject* y_exc_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, y_exc_res);
+	PyObject* y_inh_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, y_inh_res);
 	PyArray_ENABLEFLAGS((PyArrayObject *) Vm_obj_arr, NPY_ARRAY_OWNDATA);
 	PyArray_ENABLEFLAGS((PyArrayObject *) Um_obj_arr, NPY_ARRAY_OWNDATA);
 	PyArray_ENABLEFLAGS((PyArrayObject *) Isyn_obj_arr, NPY_ARRAY_OWNDATA);
+	PyArray_ENABLEFLAGS((PyArrayObject *) y_exc_obj_arr, NPY_ARRAY_OWNDATA);
+	PyArray_ENABLEFLAGS((PyArrayObject *) y_inh_obj_arr, NPY_ARRAY_OWNDATA);
 
 	float* x_res;
-	float* y_res;
 	float* u_res;
 	if (meanFlg == 1){
-		nnsim::get_mean_conn_results(x_res, y_res, u_res, N);
+		nnsim::get_mean_conn_results(x_res, u_res, N);
 	} else{
-		nnsim::get_conn_results(x_res, y_res, u_res, N);
+		nnsim::get_conn_results(x_res, u_res, N);
 	}
 	res_dims[0] = N;
 	PyObject* x_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, x_res);
-	PyObject* y_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, y_res);
 	PyObject* u_obj_arr = PyArray_SimpleNewFromData(1, res_dims, NPY_FLOAT32, u_res);
 	PyArray_ENABLEFLAGS((PyArrayObject *) x_obj_arr, NPY_ARRAY_OWNDATA);
-	PyArray_ENABLEFLAGS((PyArrayObject *) y_obj_arr, NPY_ARRAY_OWNDATA);
 	PyArray_ENABLEFLAGS((PyArrayObject *) u_obj_arr, NPY_ARRAY_OWNDATA);
 
-	PyObject* result = Py_BuildValue("(OOOOOO)", Vm_obj_arr, Um_obj_arr, Isyn_obj_arr, x_obj_arr, y_obj_arr, u_obj_arr);
+	PyObject* result = Py_BuildValue("(OOOOOOO)", Vm_obj_arr, Um_obj_arr, Isyn_obj_arr, y_exc_obj_arr, y_inh_obj_arr, x_obj_arr, u_obj_arr);
 	return result;
 }
 

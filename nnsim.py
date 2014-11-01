@@ -17,30 +17,30 @@ neur_param = {}
 
 neur_param['exc'] = {'a': 0.02, 'b_1': 0.5, 'b_2': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50.,
                        'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
-                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
+                       'Erev_AMPA': 0., 'Erev_GABA': -70., 'Isyn': 0., 'tau_psc_exc': 3., 'tau_psc_inh': 7., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
 neur_param['inh'] = {'a': 0.03, 'b_1': -2.0, 'b_2': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100.,
                        'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
-                       'Erev_AMPA': 0., 'Erev_GABBA': -70., 'Isyn': 0., 'Ie': 0.,
+                       'Erev_AMPA': 0., 'Erev_GABA': -70., 'Isyn': 0., 'tau_psc_exc': 3., 'tau_psc_inh': 7., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
 syn_param = {}
 
-syn_param['exc'] = {'tau_psc': 3., 'tau_rec': 800., 'tau_fac': 0.00001, 
+syn_param['exc'] = {'tau_rec': 800., 'tau_fac': 0.00001, 
                       'U': 0.5, 'receptor_type': 1}
 
-syn_param['inh'] = {'tau_psc': 7., 'tau_rec': 100., 'tau_fac': 1000., 
+syn_param['inh'] = {'tau_rec': 100., 'tau_fac': 1000., 
                       'U': 0.04, 'receptor_type': 2}
 
 syn_default = {'y': 0., 'x': 1., 'u': 0., 'weight': 1., 'delay': 0.}
 
 neur_arr = {'a': [], 'b_1': [], 'b_2': [], 'c': [], 'd': [], 'k': [], 'Cm': [], 
                        'Vr': [], 'Vt': [], 'Vpeak': [], 'p_1': [], 'p_2': [], 'Vm': [], 'Um': [], 
-                       'Erev_AMPA': [], 'Erev_GABBA': [], 'Isyn': [], 'Ie': [], 
+                       'Erev_AMPA': [], 'Erev_GABA': [], 'Isyn': [], 'tau_psc_exc': [], 'tau_psc_inh': [], 'Ie': [], 
                        'psn_seed': [], 'psn_rate': [], 'psn_weight': []}
 
-syn_arr = {'tau_psc': [], 'tau_rec': [], 'tau_fac': [], 'U': [], 
+syn_arr = {'tau_rec': [], 'tau_fac': [], 'U': [], 
                     'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [], 
                     'pre': [], 'post': [], 'receptor_type': []}
 
@@ -122,7 +122,7 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
                 post_ext.extend(np.random.permutation(post)[:n_post])
         if conn_spec['rule'] == 'mean_outdegree':
             for i in pre:
-                n_post = np.abs(conn_spec['N_mean'] + conn_spec['N_std']*np.random.randn())
+                n_post = np.int(np.abs(conn_spec['N_mean'] + conn_spec['N_std']*np.random.randn()))
                 pre_ext.extend([i]*n_post)
                 post_ext.extend(np.random.permutation(post)[:n_post])
     else:
@@ -150,7 +150,7 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
                 shape = value['shape']
                 scale = value['scale']
                 loc = value['loc']
-                syn_ext[key] = loc + np.random.gamma(shape, scale, size=N)
+                syn_ext[key] = loc + np.random.gamma(shape, scale, size=len(pre_ext))
         else:
             raise RuntimeError("{0} must be a number or dict".format(key))
     syn_ext['pre'] = pre_ext
@@ -186,15 +186,16 @@ def get_results(mean=False):
         num_neur_rec = len(rec_from_neur)
         num_syn_rec = len(rec_from_syn)
         mean = 0
-    (Vm_, Um_, Isyn_, x_, y_, u_) = nnsim_pykernel.get_results(mean)
+    (Vm_, Um_, Isyn_, y_exc_, y_inh_, x_, u_) = nnsim_pykernel.get_results(mean)
     Vm = []
     Um = []
     Isyn = []
+    y_exc = []
+    y_inh = []
     x = []
-    y = []
     u = []
     if len(Vm_) == 0:
-        return (Vm, Um, Isyn, x, y, u)
+        return (Vm, Um, Isyn, y_exc, y_inh, x, u)
         
     start = 0
     Tsim = len(Vm_)/num_neur_rec
@@ -203,23 +204,24 @@ def get_results(mean=False):
         Vm.append(Vm_[start:stop])
         Um.append(Um_[start:stop])
         Isyn.append(Isyn_[start:stop])
+        y_exc.append(y_exc_[start:stop])
+        y_inh.append(y_inh_[start:stop])
         stop += Tsim
         start += Tsim
     
     if len(x_) == 0:
-        return (Vm, Um, Isyn, x, y, u)
+        return (Vm, Um, Isyn, y_exc, y_inh, x, u)
 
     start = 0
     Tsim = len(x_)/num_syn_rec
     stop = Tsim
     for i in xrange(num_syn_rec):
         x.append(x_[start:stop])
-        y.append(y_[start:stop])
         u.append(u_[start:stop])
         stop += Tsim
         start += Tsim
     
-    return (Vm, Um, Isyn, x, y, u)
+    return (Vm, Um, Isyn, y_exc, y_inh, x, u)
 
 def get_spk_times():
     global spk_times, n_spike
