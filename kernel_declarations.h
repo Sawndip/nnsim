@@ -37,10 +37,12 @@ namespace nnsim{
 	float* p1_s;
 	float* p2_s;
 	float* Isyns;
-	float* AMPA_Amuont;
-	float* GABA_Amuont;
 	float* Erev_exc;
 	float* Erev_inh;
+	float* AMPA_Amuont;
+	float* GABA_Amuont;
+	float* exp_pscs_exc;
+	float* exp_pscs_inh;
 
 	unsigned int* psn_times;
 	unsigned int* psn_seeds;
@@ -53,13 +55,10 @@ namespace nnsim{
 	unsigned int* neur_num_spks;
 	unsigned int* syn_num_spks;
 	unsigned int len_spk_tms;
-	float* exp_pscs_exc;
-	float* exp_pscs_inh;
 
 	// Synaptic parameters and variables
 	float* xs;
 	float* us;
-
 	float* Us;
 	float* exp_recs;
 	float* exp_facs;
@@ -70,7 +69,7 @@ namespace nnsim{
 	unsigned int* post_syns;
 	unsigned int* receptor_type;
 
-
+	// Variables for recording
 	unsigned int recorded_neur_num = 0;
 	unsigned int* neurs_to_record;
 	float* Vm_recorded;
