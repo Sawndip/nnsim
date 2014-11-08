@@ -43,6 +43,8 @@ neur_arr = {'a': [], 'b_1': [], 'b_2': [], 'c': [], 'd': [], 'k': [], 'Cm': [],
 syn_arr = {'tau_rec': [], 'tau_fac': [], 'U': [], 
                     'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [], 
                     'pre': [], 'post': [], 'receptor_type': []}
+rec_from_neur = []
+rec_from_syn = []
 
 NumNodes = 0
 
@@ -240,7 +242,7 @@ def order_spikes(spikes):
         senders.extend([i]*len(spikes[i]))
     return (times, senders)
 
-def simulate(h, SimTime):
+def simulate(h, SimTime, gpu=False):
     global tm_step
     tm_step = h
     nnsim_pykernel.init_network(h, NumNodes, NumConns, SimTime)
@@ -285,7 +287,10 @@ def simulate(h, SimTime):
     
     for i in pop_nodes['syn']:
         nnsim_pykernel.add_conn_mean_record(np.array(i, dtype='uint32'))
-
-    nnsim_pykernel.simulate()
+    if gpu:
+        gpu = 1
+    else:
+        gpu = 0
+    nnsim_pykernel.simulate(gpu)
 
 print "  --NNSIM--  "

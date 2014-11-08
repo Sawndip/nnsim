@@ -23,7 +23,7 @@ namespace nnsim{
 	void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes,
 			unsigned int* syn_num_spikes, unsigned int spk_times_len);
 
-	int simulate();
+	int simulate(int useGPU);
 
 	void init_recorder(unsigned int neur_num, unsigned int* neurs, unsigned int con_num, unsigned int* conns);
 

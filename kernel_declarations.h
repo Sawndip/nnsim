@@ -9,11 +9,10 @@
 #define KERNEL_DECLARATIONS_H_
 
 #include "kernel_api.h"
+#include "nnsim_constants.h"
 
 namespace nnsim{
 
-	unsigned int AMPA_RECEPTOR = 1;
-	unsigned int GABA_RECEPTOR = 2;
 	// step size in ms
 	float time_step;
 	int Ncon;

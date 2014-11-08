@@ -76,7 +76,11 @@ PyMODINIT_FUNC initnnsim_pykernel(){
 }
 
 static PyObject* simulate(PyObject *self, PyObject* args){
-	nnsim::simulate();
+	int useGPU;
+	if (!PyArg_ParseTuple(args, "i", &useGPU)){
+	  return NULL;
+	}
+	nnsim::simulate(useGPU);
 	Py_INCREF(Py_None);
 	return Py_None;
 }

@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <sstream>
 #include "kernel_api.h"
+#include "cuda_kernel_api.h"
 
 namespace nnsim{
 
@@ -47,7 +48,7 @@ void init_poisson(unsigned int* seeds, float* rates, float* weights, float psn_t
 		}
 		exp_psns[i] = expf(-time_step/psn_tau);
 		psn_seeds[i] += 1000000;
-		psn_times[i] = -(1000.0f/(time_step*psn_rates[i]))*log(get_random(psn_seeds + i));
+		psn_times[i] = 1 -(1000.0f/(time_step*psn_rates[i]))*log(get_random(psn_seeds + i));
 	}
 }
 
@@ -141,114 +142,117 @@ void init_spikes(unsigned int* spike_times, unsigned int* neur_num_spikes,
 	len_spk_tms = spk_times_len;
 }
 
-int simulate(){
-	float v1, u1, v2, u2, v3, u3, v4, u4;
-	float delta_x;
-	for (unsigned int t = 0; t < Tsim; t++){
+int simulate(int useGPU=0){
+	if (useGPU){
+		simulateOnGpu();
+	} else{
+		float v1, u1, v2, u2, v3, u3, v4, u4;
+		float delta_x;
+		for (unsigned int t = 0; t < Tsim; t++){
 
-		for (int n = 0; n < Nneur; n++){
-			y_psns[n] *= exp_psns[n];
-			while (psn_times[n] == t){
-				y_psns[n] += psn_weights[n];
-				psn_times[n] -= (1000.0f/(time_step*psn_rates[n]))*log(get_random(psn_seeds + n));
+			for (int n = 0; n < Nneur; n++){
+				y_psns[n] *= exp_psns[n];
+				while (psn_times[n] == t){
+					y_psns[n] += psn_weights[n];
+					psn_times[n] -= -1 + (1000.0f/(time_step*psn_rates[n]))*log(get_random(psn_seeds + n));
+				}
+				AMPA_Amuont[n] *= exp_pscs_exc[n];
+				GABA_Amuont[n] *= exp_pscs_inh[n];
+
+				// y_psns is here because poisson noise is excitatory
+				float Isyn_new = -(AMPA_Amuont[n] + y_psns[n])*(Vms[n] - Erev_exc[n]) - GABA_Amuont[n]*(Vms[n] - Erev_inh[n]);
+				float Vm = Vms[n];
+				float Um = Ums[n];
+				v1 = izhik_Vm(Vm, Um, Isyns[n], n);
+				u1 = izhik_Um(Vm, Um, n);
+				Vms[n] = Vm + v1*0.5f;
+				Ums[n] = Um + u1*0.5f;
+				v2 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
+				u2 = izhik_Um(Vms[n], Ums[n], n);
+				Vms[n] = Vm + v2*0.5f;
+				Ums[n] = Um + u2*0.5f;
+				v3 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
+				u3 = izhik_Um(Vms[n], Ums[n], n);
+				Vms[n] = Vm + v3;
+				Ums[n] = Um + u3;
+				v4 = izhik_Vm(Vms[n], Ums[n], Isyns[n], n);
+				u4 = izhik_Um(Vms[n], Ums[n], n);
+				Vms[n] = Vm + (v1 + 2.0f*(v2 + v3) + v4)*0.16666666f;
+				Ums[n] = Um + (u1 + 2.0f*(u2 + u3) + u4)*0.16666666f;
+
+				if (Vm > Vpeaks[n]){
+	//				printf("Spike! neur: %i time: %f\n", n, t*time_step);
+					spk_times[Nneur*neur_num_spks[n] + n] = t;
+					neur_num_spks[n]++;
+					Vms[n] = cs[n];
+					Ums[n] = Um + ds[n];
+				}
+
+				Isyns[n] = Isyn_new;
 			}
-			AMPA_Amuont[n] *= exp_pscs_exc[n];
-			GABA_Amuont[n] *= exp_pscs_inh[n];
+			for (int c = 0; c < Ncon; c++){
+				xs[c] = (xs[c] - weights[c])*exp_recs[c] + weights[c];
+				us[c] = us[c]*exp_facs[c];
 
-			// y_psns is here because poisson noise is excitatory
-			float Isyn_new = -(AMPA_Amuont[n] + y_psns[n])*(Vms[n] - Erev_exc[n]) - GABA_Amuont[n]*(Vms[n] - Erev_inh[n]);
-			float Vm = Vms[n];
-			float Um = Ums[n];
-			v1 = izhik_Vm(Vm, Um, Isyns[n], n);
-			u1 = izhik_Um(Vm, Um, n);
-			Vms[n] = Vm + v1*0.5f;
-			Ums[n] = Um + u1*0.5f;
-			v2 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
-			u2 = izhik_Um(Vms[n], Ums[n], n);
-			Vms[n] = Vm + v2*0.5f;
-			Ums[n] = Um + u2*0.5f;
-			v3 = izhik_Vm(Vms[n], Ums[n], (Isyn_new + Isyns[n])*0.5f, n);
-			u3 = izhik_Um(Vms[n], Ums[n], n);
-			Vms[n] = Vm + v3;
-			Ums[n] = Um + u3;
-			v4 = izhik_Vm(Vms[n], Ums[n], Isyns[n], n);
-			u4 = izhik_Um(Vms[n], Ums[n], n);
-			Vms[n] = Vm + (v1 + 2.0f*(v2 + v3) + v4)*0.16666666f;
-			Ums[n] = Um + (u1 + 2.0f*(u2 + u3) + u4)*0.16666666f;
-			
-			if (Vm > Vpeaks[n]){
-//				printf("Spike! neur: %i time: %f\n", n, t*time_step);
-				spk_times[Nneur*neur_num_spks[n] + n] = t;
-				neur_num_spks[n]++;
-				Vms[n] = cs[n];
-				Ums[n] = Um + ds[n];
-			}
-			
-			Isyns[n] = Isyn_new;
-		}
-		for (int c = 0; c < Ncon; c++){
-			xs[c] = (xs[c] - weights[c])*exp_recs[c] + weights[c];
-			us[c] = us[c]*exp_facs[c];
-
-			if (syn_num_spks[c] < neur_num_spks[pre_syns[c]]){
-				if (t >= delays[c] && spk_times[Nneur*syn_num_spks[c] + pre_syns[c]] == t - delays[c]){
-//					printf("Spike! neur: %i time: %f\n", post_syns[c], t*time_step);
-					us[c] += Us[c]*(1.0f - us[c]);
-					delta_x = xs[c]*us[c];
-					xs[c] -= delta_x;
-					syn_num_spks[c]++;
-					// When run parallel this incrementation should be atomic
-					if (receptor_type[c] == AMPA_RECEPTOR){
-						AMPA_Amuont[post_syns[c]] += delta_x;
-					} else if (receptor_type[c] == GABA_RECEPTOR){
-						GABA_Amuont[post_syns[c]] += delta_x;
+				if (syn_num_spks[c] < neur_num_spks[pre_syns[c]]){
+					if (t >= delays[c] && spk_times[Nneur*syn_num_spks[c] + pre_syns[c]] == t - delays[c]){
+	//					printf("Spike! neur: %i time: %f\n", post_syns[c], t*time_step);
+						us[c] += Us[c]*(1.0f - us[c]);
+						delta_x = xs[c]*us[c];
+						xs[c] -= delta_x;
+						syn_num_spks[c]++;
+						// When run parallel this incrementation should be atomic
+						if (receptor_type[c] == AMPA_RECEPTOR){
+							AMPA_Amuont[post_syns[c]] += delta_x;
+						} else if (receptor_type[c] == GABA_RECEPTOR){
+							GABA_Amuont[post_syns[c]] += delta_x;
+						}
 					}
 				}
 			}
-		}
 
 
-		// Saving variables
-		for (unsigned int rec_neur = 0; rec_neur < recorded_neur_num; rec_neur++){
-			Vm_recorded[Tsim*rec_neur + t] = Vms[neurs_to_record[rec_neur]];
-			Um_recorded[Tsim*rec_neur + t] = Ums[neurs_to_record[rec_neur]];
-			Isyn_recorded[Tsim*rec_neur + t] = Isyns[neurs_to_record[rec_neur]];
-			y_exc_recorded[Tsim*rec_neur + t] = AMPA_Amuont[neurs_to_record[rec_neur]];
-			y_inh_recorded[Tsim*rec_neur + t] = GABA_Amuont[neurs_to_record[rec_neur]];
-		}
-
-		for(unsigned int rec_con = 0; rec_con < recorded_con_num; rec_con++){
-			x_recorded[Tsim*rec_con + t] = xs[conns_to_record[rec_con]];
-			u_recorded[Tsim*rec_con + t] = us[conns_to_record[rec_con]];
-		}
-
-		// Saving mean variables
-		for(unsigned int pn = 0; pn < NumPopNeur; pn++){
-			for (unsigned int i = 0; i < PopNeurSizes[pn]; i++){
-				Vm_means[Tsim*pn + t] += Vms[PopNeurs[pn][i]];
-				Um_means[Tsim*pn + t] += Ums[PopNeurs[pn][i]];
-				Isyn_means[Tsim*pn + t] += Isyns[PopNeurs[pn][i]];
-				y_exc_means[Tsim*pn + t] += AMPA_Amuont[PopNeurs[pn][i]];
-				y_inh_means[Tsim*pn + t] += GABA_Amuont[PopNeurs[pn][i]];
-//				printf("t: %f, Vm %i: %f\n", t*time_step, PopNeurs[pn][i], Vms[PopNeurs[pn][i]]);
+			// Saving variables
+			for (unsigned int rec_neur = 0; rec_neur < recorded_neur_num; rec_neur++){
+				Vm_recorded[Tsim*rec_neur + t] = Vms[neurs_to_record[rec_neur]];
+				Um_recorded[Tsim*rec_neur + t] = Ums[neurs_to_record[rec_neur]];
+				Isyn_recorded[Tsim*rec_neur + t] = Isyns[neurs_to_record[rec_neur]];
+				y_exc_recorded[Tsim*rec_neur + t] = AMPA_Amuont[neurs_to_record[rec_neur]];
+				y_inh_recorded[Tsim*rec_neur + t] = GABA_Amuont[neurs_to_record[rec_neur]];
 			}
-			Vm_means[Tsim*pn + t] /= PopNeurSizes[pn];
-			Um_means[Tsim*pn + t] /= PopNeurSizes[pn];
-			Isyn_means[Tsim*pn + t] /= PopNeurSizes[pn];
-			y_exc_means[Tsim*pn + t] /= PopNeurSizes[pn];
-			y_inh_means[Tsim*pn + t] /= PopNeurSizes[pn];
-		}
 
-		for(unsigned int pn = 0; pn < NumPopConn; pn++){
-			for (unsigned int i = 0; i < PopConnSizes[pn]; i++){
-				x_means[Tsim*pn + t] += xs[PopConns[pn][i]];
-				u_means[Tsim*pn + t] += us[PopConns[pn][i]];
+			for(unsigned int rec_con = 0; rec_con < recorded_con_num; rec_con++){
+				x_recorded[Tsim*rec_con + t] = xs[conns_to_record[rec_con]];
+				u_recorded[Tsim*rec_con + t] = us[conns_to_record[rec_con]];
 			}
-			x_means[Tsim*pn + t] /= PopConnSizes[pn];
-			u_means[Tsim*pn + t] /= PopConnSizes[pn];
+
+			// Saving mean variables
+			for(unsigned int pn = 0; pn < NumPopNeur; pn++){
+				for (unsigned int i = 0; i < PopNeurSizes[pn]; i++){
+					Vm_means[Tsim*pn + t] += Vms[PopNeurs[pn][i]];
+					Um_means[Tsim*pn + t] += Ums[PopNeurs[pn][i]];
+					Isyn_means[Tsim*pn + t] += Isyns[PopNeurs[pn][i]];
+					y_exc_means[Tsim*pn + t] += AMPA_Amuont[PopNeurs[pn][i]];
+					y_inh_means[Tsim*pn + t] += GABA_Amuont[PopNeurs[pn][i]];
+	//				printf("t: %f, Vm %i: %f\n", t*time_step, PopNeurs[pn][i], Vms[PopNeurs[pn][i]]);
+				}
+				Vm_means[Tsim*pn + t] /= PopNeurSizes[pn];
+				Um_means[Tsim*pn + t] /= PopNeurSizes[pn];
+				Isyn_means[Tsim*pn + t] /= PopNeurSizes[pn];
+				y_exc_means[Tsim*pn + t] /= PopNeurSizes[pn];
+				y_inh_means[Tsim*pn + t] /= PopNeurSizes[pn];
+			}
+
+			for(unsigned int pn = 0; pn < NumPopConn; pn++){
+				for (unsigned int i = 0; i < PopConnSizes[pn]; i++){
+					x_means[Tsim*pn + t] += xs[PopConns[pn][i]];
+					u_means[Tsim*pn + t] += us[PopConns[pn][i]];
+				}
+				x_means[Tsim*pn + t] /= PopConnSizes[pn];
+				u_means[Tsim*pn + t] /= PopConnSizes[pn];
+			}
 		}
 	}
-
 //	for (unsigned int rec_neur = 0; rec_neur < recorded_neur_num; rec_neur++){
 //		std::stringstream s;
 //		char* name = new char[500];
