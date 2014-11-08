@@ -18,8 +18,8 @@ __device__ float get_random(unsigned int *seed){
 	return ((float)x)/m;
 }
 
-__global__ void integrate_synapses(float* x, float* u, float* exp_rec, float* exp_fac, float* U, 
-								   float* weight, int* delay, int* pre_syn, int* post_syn, unsigned int* receptor_type,
+__global__ void integrate_synapses(float* x, float* u, float* exp_rec, float* exp_fac, float* U,
+								   float* weight, unsigned int* delay, unsigned int* pre_syn, unsigned int* post_syn, unsigned int* receptor_type,
 								   unsigned int* syn_num_spk, unsigned int* neur_num_spk, unsigned int* spk_time,
 								   float* AMPA_Amuont, float* GABA_Amuont,
 								   unsigned int t, int Ncon, int Nneur){
@@ -114,21 +114,25 @@ void simulateOnGpu(){
 	copy2device();
 	for (unsigned int t = 0; t < Tsim; t++){
 		integrate_neurons<<<Nneur/NEUR_BLOCK_SZ + 1, NEUR_BLOCK_SZ>>>(
-				Vms_dev, Ums_dev, as_dev, b1_s_dev, b2_s_dev, cs_dev, ds_dev, ks_dev, p1_s_dev, p2_s_dev,
-				Vpeaks_dev, Vrs_dev, Vts_dev, Cms_dev, Ies_dev, Isyns_dev,
-				AMPA_Amuont_dev, GABA_Amuont_dev, exp_pscs_exc_dev, exp_pscs_inh_dev,
-				Erev_exc_dev, Erev_inh_dev,
-				y_psns_dev, psn_weights_dev, exp_psns_dev, psn_times_dev, psn_rates_dev, psn_seeds_dev,
-				spk_times_dev, neur_num_spks_dev, t, time_step, Nneur);
-//		cudaDeviceSynchronize();
-//		integrate_synapses<<<Ncon/SYN_BLOCK_SZ + 1, SYN_BLOCK_SZ>>>(
-//				);
-//		cudaDeviceSynchronize();
+			Vms_dev, Ums_dev, as_dev, b1_s_dev, b2_s_dev, cs_dev, ds_dev, ks_dev, p1_s_dev, p2_s_dev,
+			Vpeaks_dev, Vrs_dev, Vts_dev, Cms_dev, Ies_dev, Isyns_dev,
+			AMPA_Amuont_dev, GABA_Amuont_dev, exp_pscs_exc_dev, exp_pscs_inh_dev,
+			Erev_exc_dev, Erev_inh_dev,
+			y_psns_dev, psn_weights_dev, exp_psns_dev, psn_times_dev, psn_rates_dev, psn_seeds_dev,
+			spk_times_dev, neur_num_spks_dev, t, time_step, Nneur);
+		cudaDeviceSynchronize();
+		integrate_synapses<<<Ncon/SYN_BLOCK_SZ + 1, SYN_BLOCK_SZ>>>(
+			xs_dev, us_dev, exp_recs_dev, exp_facs_dev, Us_dev,
+			weights_dev, delays_dev, pre_syns_dev, post_syns_dev, receptor_type_dev,
+			syn_num_spks_dev, neur_num_spks_dev, spk_times_dev,
+			AMPA_Amuont_dev, GABA_Amuont_dev,
+			t, Ncon, Nneur);
+		cudaDeviceSynchronize();
 	}
-	const char* error = cudaGetErrorString(cudaPeekAtLastError());
-	printf("%s\n", error);
-	error = cudaGetErrorString(cudaThreadSynchronize());
-	printf("%s\n", error);
+//	const char* error = cudaGetErrorString(cudaPeekAtLastError());
+//	printf("%s\n", error);
+//	error = cudaGetErrorString(cudaThreadSynchronize());
+//	printf("%s\n", error);
 	CUDA_CHECK_RETURN(
 		cudaMemcpy(spk_times, spk_times_dev, sizeof(unsigned int)*len_spk_tms, cudaMemcpyDeviceToHost));
 	CUDA_CHECK_RETURN(

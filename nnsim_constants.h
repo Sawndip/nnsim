@@ -12,6 +12,6 @@
 #define GABA_RECEPTOR 2
 
 #define NEUR_BLOCK_SZ 256
-#define SYN_BLOCK_SZ 1024
+#define SYN_BLOCK_SZ 512
 
 #endif /* NNSIM_CONSTANTS_H_ */

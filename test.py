@@ -11,11 +11,11 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 h = .5
-SimTime = 10000.
+SimTime = 20000.
 bin_sz = 5.
 NumExc = 400
 NumInh = 100
-p_con = 0.5
+p_con = 0.05
 
 n_exc = create(1400, n_type="exc", d={'distr': 'normal', 'mean': 70., 'std': 25.},
 #               Ie={'distr': 'normal', 'mean': 10., 'std': 5., 'abs': True},
@@ -35,17 +35,17 @@ N_exc_con = int(round(np.sqrt(p_con) * NumExc))
 N_inh_con = int(round(np.sqrt(p_con) * NumInh))
 
 pre = np.random.permutation(n_exc)[:N_exc_con]
-#con = connect(pre, n_inh+n_exc, conn_spec={'rule': 'fixed_outdegree', 'N': N_exc_con},
-#              delay={'distr': 'uniform', 'low': 0., 'high': 10.},
-#              tau_rec=800.,
-#              x={'distr': 'uniform', 'low': 0., 'high': .5},
-#              weight={'distr': 'normal', 'mean': 5., 'std': 5., 'abs': True})
-#
-#pre = np.random.permutation(n_inh)[:N_inh_con]
-#con2 = connect(pre, n_inh+n_exc, syn="inh", conn_spec={'rule': 'fixed_outdegree', 'N': N_inh_con},
-#              delay={'distr': 'uniform', 'low': 0., 'high': 10.},
-#              x={'distr': 'uniform', 'low': 0., 'high': .5},
-#              weight={'distr': 'normal', 'mean': 6., 'std': 2., 'abs': True})
+con = connect(pre, n_inh+n_exc, conn_spec={'rule': 'fixed_outdegree', 'N': N_exc_con},
+              delay={'distr': 'uniform', 'low': 0., 'high': 10.},
+              tau_rec=800.,
+              x={'distr': 'uniform', 'low': 0., 'high': .5},
+              weight={'distr': 'normal', 'mean': 5., 'std': 5., 'abs': True})
+
+pre = np.random.permutation(n_inh)[:N_inh_con]
+con2 = connect(pre, n_inh+n_exc, syn="inh", conn_spec={'rule': 'fixed_outdegree', 'N': N_inh_con},
+              delay={'distr': 'uniform', 'low': 0., 'high': 10.},
+              x={'distr': 'uniform', 'low': 0., 'high': .5},
+              weight={'distr': 'normal', 'mean': 6., 'std': 2., 'abs': True})
 
 #init_recorder([])
 

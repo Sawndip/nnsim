@@ -8,7 +8,7 @@ FLAGS=-Wall -O3
 all: nnsim_pykernel.so
 
 nnsim_pykernel.so: $(BUILD_DIR) $(BUILD_DIR)py_neuronet.o $(BUILD_DIR)libkernel_api.so $(BUILD_DIR)cuda_kernel_api.o
-	nvcc -O3 -shared $(BUILD_DIR)py_neuronet.o $(BUILD_DIR)cuda_kernel_api.o -L. -L$(BUILD_DIR) -lkernel_api -lpython2.7 -o nnsim_pykernel.so -Xlinker -rpath,.,-rpath,$(BUILD_DIR)
+	nvcc --use_fast_math -O3 -shared $(BUILD_DIR)py_neuronet.o $(BUILD_DIR)cuda_kernel_api.o -L. -L$(BUILD_DIR) -lkernel_api -lpython2.7 -o nnsim_pykernel.so -Xlinker -rpath,.,-rpath,$(BUILD_DIR)
 # 	$(CC) -shared $(FLAGS) -pthread $(BUILD_DIR)py_neuronet.o -L. -L$(BUILD_DIR) -lkernel_api -o nnsim_pykernel.so -Wl,-rpath,.,-rpath,$(BUILD_DIR)
 
 $(BUILD_DIR)py_neuronet.o:
