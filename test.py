@@ -57,7 +57,7 @@ con2 = connect(pre, n_inh+n_exc, syn="inh", conn_spec={'rule': 'fixed_outdegree'
 
 import time
 start = time.time()
-simulate(h, SimTime, gpu=True)
+simulate(h, SimTime, gpu=False)
 print "Elapsed %f s" % (time.time() - start)
 
 spikes = get_spk_times()

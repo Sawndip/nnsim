@@ -68,7 +68,9 @@ def create(N, n_type="exc", **kwargs):
     default_params=neur_param[n_type].copy()
 
     for key, value in kwargs.items():
-        if type(value) not in [str, list, tuple, dict, np.ndarray]:
+        if type(value) in [list, tuple, np.ndarray]:
+            neur_arr[key].extend(value[:N])
+        elif type(value) not in [str, dict]:
             neur_arr[key].extend([value]*N)
         elif type(value) == dict:
             if value['distr'] == 'normal':
@@ -95,7 +97,13 @@ def create(N, n_type="exc", **kwargs):
             neur_arr[key].extend([value]*N)
     NumNodes += N
     return [i for i in xrange(NumNodes - N, NumNodes)]
-    
+
+def set_nparam(n_idx, **kwargs):
+    if type(n_idx) in [list, np.ndarray]:
+        n_idx = n_idx[0]
+    for key, value in kwargs.items():
+        neur_arr[key][n_idx] = value
+
 def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     global syn_arr, NumConns
     pre = check_type(pre)
@@ -289,8 +297,11 @@ def simulate(h, SimTime, gpu=False):
         nnsim_pykernel.add_conn_mean_record(np.array(i, dtype='uint32'))
     if gpu:
         gpu = 1
+        print "Simulating by using CUDA"
     else:
+        print "Simulating by using CPU"
         gpu = 0
+    
     nnsim_pykernel.simulate(gpu)
 
 print "  --NNSIM--  "
