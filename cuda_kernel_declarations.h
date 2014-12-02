@@ -1,12 +1,12 @@
 /*
- * cuda_kernel_api.h
+ * cuda_kernel_declarations.h
  *
  *  Created on: 05.11.2014
  *      Author: pavel
  */
 
-#ifndef CUDA_KERNEL_API_H_
-#define CUDA_KERNEL_API_H_
+#ifndef CUDA_KERNEL_DECLARATIONS_H_
+#define CUDA_KERNEL_DECLARATIONS_H_
 
 #include <stdio.h>
 
@@ -217,4 +217,4 @@ namespace nnsim {
 	}
 
 
-#endif /* CUDA_KERNEL_API_H_ */
+#endif /* CUDA_KERNEL_DECLARATIONS_H_ */

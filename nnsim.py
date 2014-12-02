@@ -16,32 +16,32 @@ psn_tau = 3.
 neur_param = {}
 
 neur_param['exc'] = {'a': 0.02, 'b_1': 0.5, 'b_2': 0.5, 'c': -40., 'd': 100., 'k': 0.5, 'Cm': 50.,
-                       'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
+                       'Vr': -60., 'Vt': -45., 'Vpeak': 40., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0.,
                        'Erev_AMPA': 0., 'Erev_GABA': -70., 'Isyn': 0., 'tau_psc_exc': 3., 'tau_psc_inh': 7., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
 neur_param['inh'] = {'a': 0.03, 'b_1': -2.0, 'b_2': -2.0, 'c': -50., 'd': 100., 'k': 0.7, 'Cm': 100.,
-                       'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0., 
+                       'Vr': -60., 'Vt': -40., 'Vpeak': 35., 'p_1': 1., 'p_2': 1., 'Vm': -60., 'Um': 0.,
                        'Erev_AMPA': 0., 'Erev_GABA': -70., 'Isyn': 0., 'tau_psc_exc': 3., 'tau_psc_inh': 7., 'Ie': 0.,
                        'psn_seed': None, 'psn_rate': 0., 'psn_weight': 1.}
 
 syn_param = {}
 
-syn_param['exc'] = {'tau_rec': 800., 'tau_fac': 0.00001, 
+syn_param['exc'] = {'tau_rec': 800., 'tau_fac': 0.00001,
                       'U': 0.5, 'receptor_type': 1}
 
-syn_param['inh'] = {'tau_rec': 100., 'tau_fac': 1000., 
+syn_param['inh'] = {'tau_rec': 100., 'tau_fac': 1000.,
                       'U': 0.04, 'receptor_type': 2}
 
 syn_default = {'y': 0., 'x': 1., 'u': 0., 'weight': 1., 'delay': 0.}
 
-neur_arr = {'a': [], 'b_1': [], 'b_2': [], 'c': [], 'd': [], 'k': [], 'Cm': [], 
-                       'Vr': [], 'Vt': [], 'Vpeak': [], 'p_1': [], 'p_2': [], 'Vm': [], 'Um': [], 
-                       'Erev_AMPA': [], 'Erev_GABA': [], 'Isyn': [], 'tau_psc_exc': [], 'tau_psc_inh': [], 'Ie': [], 
+neur_arr = {'a': [], 'b_1': [], 'b_2': [], 'c': [], 'd': [], 'k': [], 'Cm': [],
+                       'Vr': [], 'Vt': [], 'Vpeak': [], 'p_1': [], 'p_2': [], 'Vm': [], 'Um': [],
+                       'Erev_AMPA': [], 'Erev_GABA': [], 'Isyn': [], 'tau_psc_exc': [], 'tau_psc_inh': [], 'Ie': [],
                        'psn_seed': [], 'psn_rate': [], 'psn_weight': []}
 
-syn_arr = {'tau_rec': [], 'tau_fac': [], 'U': [], 
-                    'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [], 
+syn_arr = {'tau_rec': [], 'tau_fac': [], 'U': [],
+                    'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [],
                     'pre': [], 'post': [], 'receptor_type': []}
 rec_from_neur = []
 rec_from_syn = []
@@ -49,6 +49,21 @@ rec_from_syn = []
 NumNodes = 0
 
 NumConns = 0
+
+def init():
+    global NumNodes, NumConns
+    NumNodes, NumConns = 0, 0
+    global neur_arr, syn_arr, rec_from_neur, rec_from_syn
+    neur_arr = {'a': [], 'b_1': [], 'b_2': [], 'c': [], 'd': [], 'k': [], 'Cm': [],
+                       'Vr': [], 'Vt': [], 'Vpeak': [], 'p_1': [], 'p_2': [], 'Vm': [], 'Um': [],
+                       'Erev_AMPA': [], 'Erev_GABA': [], 'Isyn': [], 'tau_psc_exc': [], 'tau_psc_inh': [], 'Ie': [],
+                       'psn_seed': [], 'psn_rate': [], 'psn_weight': []}
+
+    syn_arr = {'tau_rec': [], 'tau_fac': [], 'U': [],
+                    'y': [], 'x': [], 'u': [], 'weight': [], 'delay': [],
+                    'pre': [], 'post': [], 'receptor_type': []}
+    rec_from_neur = []
+    rec_from_syn = []
 
 def check_type(arg, ar_type=int):
     if type(arg) == list:
@@ -62,7 +77,7 @@ def check_type(arg, ar_type=int):
     elif type(arg) != ar_type:
         raise RuntimeError("Argument must be " + str(ar_type) + "or list of " + str(ar_type))
     return [arg]
-    
+
 def create(N, n_type="exc", **kwargs):
     global neur_arr, NumNodes
     default_params=neur_param[n_type].copy()
@@ -76,7 +91,7 @@ def create(N, n_type="exc", **kwargs):
             if value['distr'] == 'normal':
                 std = value['std']
                 mean = value['mean']
-                if value.get('abs') == True:
+                if value.get('abs', True) == True:
                     neur_arr[key].extend(np.abs(mean + std*np.random.randn(N)))
                 else:
                     neur_arr[key].extend(mean + std*np.random.randn(N))
@@ -92,7 +107,7 @@ def create(N, n_type="exc", **kwargs):
         else:
             raise RuntimeError("{0} must be a number or dict".format(key))
         default_params.pop(key)
-        
+
     for key, value in default_params.items():
             neur_arr[key].extend([value]*N)
     NumNodes += N
@@ -148,7 +163,7 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
             if value['distr'] == 'normal':
                 std = value['std']
                 mean = value['mean']
-                if value.get('abs') == True:
+                if value.get('abs', True) == True:
                     syn_ext[key] = np.abs(mean + std*np.random.randn(len(pre_ext)))
                 else:
                     syn_ext[key] = mean + std*np.random.randn(len(pre_ext))
@@ -171,16 +186,20 @@ def connect(pre, post, conn_spec='one_to_one', syn='exc', **kwargs):
     NumConns += len(pre_ext)
     return [i for i in xrange(NumConns - len(pre_ext), NumConns)]
 
-def init_recorder(rec_from_n=[], rec_from_s=[]):
+def record(nodes, node_type='neur'):
     global rec_from_neur, rec_from_syn
-    rec_from_neur = check_type(rec_from_n)
-    rec_from_syn = check_type(rec_from_s)
+    if node_type == 'neur':
+        rec_from_neur.extend(check_type(nodes))
+    elif node_type == 'syn':
+        rec_from_syn.extend(check_type(nodes))
+    print rec_from_neur
 
 pop_idx = {'neur': 0, 'syn': 0}
 pop_nodes = {'neur': [], 'syn': []}
 pop_names = {'neur': [], 'syn': []}
 
-def mean_rec(nodes, ntype='neur', name=None):
+def mean_record(nodes, node_type='neur', name=None):
+    pop_nodes[ntype].append(nodes)
     if name == None:
         name = pop_idx[ntype]
     pop_names[ntype].append(name)
@@ -206,7 +225,7 @@ def get_results(mean=False):
     u = []
     if len(Vm_) == 0:
         return (Vm, Um, Isyn, y_exc, y_inh, x, u)
-        
+
     start = 0
     Tsim = len(Vm_)/num_neur_rec
     stop = Tsim
@@ -218,7 +237,7 @@ def get_results(mean=False):
         y_inh.append(y_inh_[start:stop])
         stop += Tsim
         start += Tsim
-    
+
     if len(x_) == 0:
         return (Vm, Um, Isyn, y_exc, y_inh, x, u)
 
@@ -230,17 +249,20 @@ def get_results(mean=False):
         u.append(u_[start:stop])
         stop += Tsim
         start += Tsim
-    
+
     return (Vm, Um, Isyn, y_exc, y_inh, x, u)
 
 def get_spk_times():
     global spk_times, n_spike
     (spk_times, n_spike) = nnsim_pykernel.get_spk_times()
-   
+
     spikes = []
     for i in xrange(NumNodes):
         spikes.append([spk_times[NumNodes*sn + i]*tm_step for sn in xrange(n_spike[i])])
     return spikes
+
+def get_ordered_spikes():
+    return order_spikes(get_spk_times())
 
 def order_spikes(spikes):
     times = []
@@ -272,36 +294,34 @@ def simulate(h, SimTime, gpu=False):
     psn_args['psn_weight'] = np.array(neur_arr['psn_weight'], dtype='float32')
     psn_args['psn_tau'] = psn_tau
     nnsim_pykernel.init_poisson(**psn_args)
-    
+
     args = {}
     for key, val in syn_arr.items():
         args[key] = np.array(val, dtype='float32')
     for key in ['pre', 'post', 'receptor_type']:
         args[key] = np.array(syn_arr[key], dtype='uint32')
     nnsim_pykernel.init_synapses(**args)
-    
+
     args = {}
     args['sps_times'] = np.zeros(NumNodes*SimTime/MeanSpkPeriod, dtype='uint32')
     args['neur_num_spk'] = np.zeros(NumNodes, dtype='uint32')
     args['syn_num_spk'] = np.zeros(NumConns, dtype='uint32')
     nnsim_pykernel.init_spikes(**args)
-    
-    nnsim_pykernel.init_recorder(len(rec_from_neur), rec_from_neur, 
+
+    nnsim_pykernel.init_recorder(len(rec_from_neur), rec_from_neur,
                                  len(rec_from_syn), rec_from_syn)
 
     nnsim_pykernel.init_mean_recorder(pop_idx['neur'], pop_idx['syn'])
     for i in pop_nodes['neur']:
         nnsim_pykernel.add_neur_mean_record(np.array(i, dtype='uint32'))
-    
+
     for i in pop_nodes['syn']:
         nnsim_pykernel.add_conn_mean_record(np.array(i, dtype='uint32'))
-    if gpu:
-        gpu = 1
-        print "Simulating by using CUDA"
-    else:
-        print "Simulating by using CPU"
-        gpu = 0
-    
+    gpu = [0, 1][gpu]
+        #gpu = 1
+    #else:
+        #gpu = 0
+
     nnsim_pykernel.simulate(gpu)
 
 print "  --NNSIM--  "
