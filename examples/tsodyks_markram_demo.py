@@ -3,13 +3,11 @@
 Example of using NNSim for modeling short term placticity
 """
 # Импорт различных библиотек
-import nnsim
 from nnsim import *
 import matplotlib
 import matplotlib.pyplot as pl
 import numpy as np
-matplotlib.rc('lines', linewidth=1.5)
-matplotlib.rc('font', size=26.)
+
 h = .2 # шаг интегрирования
 SimTime = 2000. # время симуляции в мс
 
@@ -36,13 +34,6 @@ simulate(h, SimTime) # запуск симуляции без применени
 (Vm, Um, Isyn, y_exc, y_inh, x, u) = get_results()
 t = np.linspace(0, SimTime, len(Vm[0]))
 
-fig = pl.figure(figsize=(16, 12))
-#ax = []
-#for i in range(len(con_rec)+1):
-#    ax.append(pl.subplot(len(neur_rec), 1, i+1))
-#    ax[i].plot(t, Vm[i])
-##    ax[i].set_ylabel("Vm_"+str(neur_rec[i]) + ", mV")
-
 ax = []
 ax.append(pl.subplot(311))
 ax.append(pl.subplot(312))
@@ -52,40 +43,13 @@ ax[0].plot(t, Vm[0], 'r')
 ax[1].plot(t, Vm[1])
 ax[2].plot(t, Vm[2])
 
-ax[0].set_yticks([-60., 0., 60])
-ax[2].set_yticks([-60.5, -60.])
-ax[1].set_yticks([-60., -45])
-
-ax[1].set_ylabel("Membrane potential, mV", fontsize=19)
-ax[0].set_title("Generator", fontsize=22)
-ax[1].set_title("Depressive connection", fontsize=22)
-ax[2].set_title("Facilitative connection", fontsize=22)
+ax[1].set_ylabel("Membrane potential, mV", fontsize=18)
+ax[0].set_title("Generator", fontsize=18)
+ax[1].set_title("Depressive connection", fontsize=18)
+ax[2].set_title("Facilitative connection", fontsize=18)
 ax[1].set_xticks([])
 ax[0].set_xticks([])
 
 pl.xlabel("Time, ms")
 pl.show()
 
-#ax = []
-#ax.append(pl.subplot(311))
-#ax.append(pl.subplot(312))
-#ax.append(pl.subplot(313))
-#idx = 1
-#ax[0].plot(t, x[idx], 'g')
-#ax[1].plot(t, u[idx], 'k')
-#ax[2].plot(t, y_exc[0], 'r')
-#ax[0].set_yticks([0., 0.5, 1.])
-#ax[1].set_yticks([0., 0.5, 1.])
-#ax[2].set_yticks([0., 0.37, .75])
-##ax[0].set_yticks([0.5, 0.75, 1.])
-##ax[1].set_yticks([0., 0.1, .2])
-##ax[2].set_yticks([0., 0.08, .16])
-#
-#ax[1].set_xticks([])
-#ax[0].set_xticks([])
-#
-#ax[0].set_ylabel("x")
-#ax[1].set_ylabel("u")
-##ax[2].set_ylabel("y")
-#pl.xlabel("Time, ms")
-#pl.show()
