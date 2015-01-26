@@ -1,0 +1,29 @@
+CXX=cl.exe
+NUMPY_INC_DIR=C:\Python27\Lib\site-packages\numpy\core\include\numpy
+PY_INC_DIR=C:\Python27\include
+BDIR=build
+PY_LIB_DIR=C:\Python27\libs
+
+all: $(BDIR)\nnsim_pykernel.pyd $(BDIR)\__init__.py
+
+$(BDIR)\nnsim_pykernel.pyd: $(BDIR) $(BDIR)\kernel_api.obj $(BDIR)\py_neuronet.obj $(BDIR)\cuda_kernel_api.obj
+	nvcc -shared $(BDIR)\py_neuronet.obj $(BDIR)\cuda_kernel_api.obj $(BDIR)\kernel_api.obj -lpython27 -L"$(PY_LIB_DIR)" -o $@
+# 	link.exe /DLL $(BDIR)\py_neuronet.obj $(BDIR)\kernel_api.obj $(PY_LIB_DIR)"/python27.lib" /out:"$@"
+
+$(BDIR)\py_neuronet.obj: py_neuronet.cpp kernel_api.h
+	$(CXX) -D"FOR_WINDOWS" -EHsc -Ox -c py_neuronet.cpp -I"$(PY_INC_DIR)" -I"$(NUMPY_INC_DIR)" /Fo$@
+
+$(BDIR)\kernel_api.obj: kernel_api.cpp kernel_api.h cuda_kernel_api.h
+	$(CXX) -D"USE_CUDA" -EHsc -Ox -c kernel_api.cpp /Fo$@
+
+$(BDIR)\cuda_kernel_api.obj: cuda_kernel_api.cu cuda_kernel_declarations.h 
+	nvcc -c --use_fast_math -O3 cuda_kernel_api.cu -arch sm_21 -o $@
+
+$(BDIR)\__init__.py: $(BDIR)
+	copy nnsim.py $@
+
+$(BDIR):
+	mkdir $(BDIR)
+
+clean:
+	rmdir /Q /S $(BDIR)
