@@ -6,7 +6,8 @@ Created on Sat Aug 16 16:59:32 2014
 """
 
 import nnsim
-from nnsim import connect, create, get_results, init_recorder, simulate, get_spk_times, order_spikes, set_nparam
+from nnsim import connect, create, get_results, simulate, get_spk_times, order_spikes, set_nparam, record
+import matplotlib
 import matplotlib.pyplot as pl
 import numpy as np
 
@@ -23,9 +24,7 @@ n_inh = create(1, n_type="inh", Ie=[75, 75], d=[40, 100])
 #              delay={'distr': 'std', 'mean': 15., 'std': 5.}, syn='inh')
 
 neur_rec = n_exc+n_inh
-#syn_rec = con
-#init_recorder(neur_rec, syn_rec)
-init_recorder(neur_rec)
+record(neur_rec)
 print "Num conns", nnsim.NumConns
 
 simulate(h, SimTime)

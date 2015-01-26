@@ -12,11 +12,16 @@ import numpy as np
 matplotlib.rc('lines', linewidth=1.5)
 matplotlib.rc('font', size=26.)
 h 	= .5
-SimTime = 2000.
+SimTime = 1000.
 bin_sz  = 5.0	# размер временног окна в котором будет считаться кол-во спайков
 NumExc  = 1400  # кол-во возбуждающих нейронов
 NumPmkr = 100   # кол-во генераторов ритма (pacemaker)
 NumInh  = 400   # кол-во тормозных нейронов
+
+# Параметры для большой сети
+#NumExc  = 7000  # кол-во возбуждающих нейронов
+#NumPmkr = 500   # кол-во генераторов ритма (pacemaker)
+#NumInh  = 2000   # кол-во тормозных нейронов
 p_con   = 0.025 # вероятность 2-х нейронов быть связанными
 
 for i in range(1, 3):
@@ -39,16 +44,20 @@ for i in range(1, 3):
                   tau_rec=800.,
                   x={'distr': 'uniform', 'low': 0., 'high': .5},
                   weight={'distr': 'normal', 'mean': 7., 'std': 4.})
+# Параметры для большой сети
+                  weight={'distr': 'normal', 'mean': 2., 'std': 5.})
     # тоже самое для тормозной популяции
     pre = np.random.permutation(n_inh)[:N_inh_con]
     con2 = connect(pre, n_inh+n_exc+n_pmkr, syn="inh", conn_spec={'rule': 'fixed_outdegree', 'N': N_inh_con},
                   delay={'distr': 'uniform', 'low': 0., 'high': 10.},
                   x={'distr': 'uniform', 'low': 0., 'high': .5},
                   weight={'distr': 'normal', 'mean': 6., 'std': 2.})
+# Параметры для большой сети
+                  weight={'distr': 'normal', 'mean': 1.2, 'std': .4})
     # замер времени симуляции
     import time
     start = time.time()
-    simulate(h, SimTime, gpu=True)
+    simulate(h, SimTime, gpu=False)
     print "Elapsed %f s" % (time.time() - start)
 
 # визуализация полученных данных

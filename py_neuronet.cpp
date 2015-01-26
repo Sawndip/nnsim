@@ -5,8 +5,14 @@
  *      Author: pavel
  */
 
+#ifndef FOR_WINDOWS
 #include <python2.7/Python.h>
 #include <numpy/arrayobject.h>
+#else
+#include <Python.h>
+#include <arrayobject.h>
+#endif
+
 #include "kernel_api.h"
 #include <cstdio>
 

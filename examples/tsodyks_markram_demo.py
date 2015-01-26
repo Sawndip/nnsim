@@ -5,6 +5,7 @@ Example of using NNSim for modeling short term placticity
 # Импорт различных библиотек
 import nnsim
 from nnsim import *
+import matplotlib
 import matplotlib.pyplot as pl
 import numpy as np
 matplotlib.rc('lines', linewidth=1.5)

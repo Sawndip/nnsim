@@ -192,7 +192,6 @@ def record(nodes, node_type='neur'):
         rec_from_neur.extend(check_type(nodes))
     elif node_type == 'syn':
         rec_from_syn.extend(check_type(nodes))
-    print rec_from_neur
 
 pop_idx = {'neur': 0, 'syn': 0}
 pop_nodes = {'neur': [], 'syn': []}
